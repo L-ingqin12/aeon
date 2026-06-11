@@ -22,8 +22,8 @@ export const meta = {
     { title: 'Deploy', detail: 'Apply passing evolutions, queue others for review' },
     // 引导链路 (Bootstrap)
     { title: 'Discover', detail: 'Scan conversations for repeatable workflows not yet captured as skills' },
-    { title: 'Evaluate Necessity', detail: '6-gate check: frequency, stability, scope, overlap, complexity, routing' },
-    { title: 'Bootstrap', detail: 'Generate well-structured skill definitions from validated patterns' },
+    { title: 'Evaluate Necessity', detail: '7-gate check: G0 script-first + G1-G6 skill necessity. Scripts for closed-world, skills for open-world' },
+    { title: 'Bootstrap', detail: 'Generate scripts (closed-world) or skill definitions (open-world) from validated patterns' },
   ],
 };
 
@@ -32,49 +32,14 @@ export const meta = {
 // ============================================================
 phase('Collect');
 
-const transcripts = await agent(
-  `List all conversation transcript files from .claude/transcripts/ or similar locations.
-   Return the file paths of the most recent 50 conversations as a JSON array.
-   If no transcripts directory exists, return an empty array.`,
-  { label: 'find-transcripts', schema: { type: 'array', items: { type: 'string' } } }
+// 确定性 I/O — 1 次轻量 agent 调用，不做语义分析
+const fs = await agent(
+  `Run these commands and return ONLY raw output, no analysis:
+   1. ls .claude/transcripts/ 2>/dev/null | tail -50 || echo "NO_TRANSCRIPTS"
+   2. find . -path '*/.claude/skills/*.md' -o -path '*/agents/*.md' -o -name 'CLAUDE.md' 2>/dev/null | head -50
+   3. cat .claude/aeon/evolution-history.jsonl 2>/dev/null | tail -20 || echo "NO_HISTORY"`,
+  { label: 'collect-files' }
 );
-
-const entityDefinitions = await agent(
-  `Scan the project for all evolvable entities:
-   - Skills: .claude/skills/*.md
-   - Agents: look for agent definitions
-   - Memory files: memory/*.md or .claude/projects/*/memory/*.md
-   - CLAUDE.md files
-   - Workflow scripts: .claude/workflows/*.js
-
-   For each, return: { type, name, path, current_version (if known), content_summary }`,
-  { label: 'find-entities', schema: {
-    type: 'object',
-    properties: {
-      entities: { type: 'array', items: {
-        type: 'object',
-        properties: {
-          type: { type: 'string' },
-          name: { type: 'string' },
-          path: { type: 'string' },
-          current_version: { type: 'string' },
-          content_summary: { type: 'string' },
-        },
-      }},
-    },
-  }}
-);
-
-const evolutionHistory = await agent(
-  `Read the evolution history file if it exists (.claude/aeon/evolution-history.jsonl).
-   Return the last 20 evolution records as a JSON array.
-   If the file doesn't exist, return an empty array.`,
-  { label: 'read-evolution-history', schema: {
-    type: 'array', items: { type: 'object' },
-  }}
-);
-
-log(`Collected ${transcripts?.length || 0} transcripts, ${entityDefinitions?.entities?.length || 0} entities, ${evolutionHistory?.length || 0} prior evolutions`);
 
 // ============================================================
 // Phase 2: Observe — 提取信号
@@ -82,16 +47,11 @@ log(`Collected ${transcripts?.length || 0} transcripts, ${entityDefinitions?.ent
 phase('Observe');
 
 const observationReport = await agent(
-  `You are the Observer Agent. Analyze the following conversation transcripts and entity definitions
-   to extract evolution signals.
+  `You are the Observer Agent. Below is raw collected data from the project.
+   Analyze it to extract evolution signals. File scanning was done deterministically — you only do semantic analysis.
 
-   Transcripts available: ${JSON.stringify(transcripts?.slice(0, 20) || [])}
-
-   Entities observed:
-   ${JSON.stringify(entityDefinitions?.entities || [])}
-
-   Prior evolution history:
-   ${JSON.stringify(evolutionHistory?.slice(0, 10) || [])}
+   Collected data:
+   ${fs}
 
    Extract:
    1. Correction signals (user says "no", "wrong", "should be X")
@@ -138,6 +98,7 @@ const observationReport = await agent(
 );
 
 const opportunities = observationReport?.improvement_opportunities || [];
+const entitiesFound = observationReport?.entities_observed || [];
 log(`Observer found ${observationReport?.signals?.length || 0} signals → ${opportunities.length} improvement opportunities`);
 
 if (!opportunities.length) {
@@ -169,7 +130,8 @@ const evolutions = await pipeline(
 
       Opportunity: ${JSON.stringify(opp)}
 
-      Current entity definitions: ${JSON.stringify(entityDefinitions)}
+      Entity definitions (from observer scan):
+      ${JSON.stringify(entitiesFound)}
 
       Apply the appropriate mutation operator (prompt_clarify, tool_add, tool_remove,
       strategy_inject, trigger_tune, knowledge_update, example_add, constraint_add).
@@ -224,7 +186,7 @@ const validatedEvolutions = await pipeline(
       2. Adversarial test: how could this change fail?
       3. Consistency check: does this conflict with other entities?
 
-      Entities context: ${JSON.stringify(entityDefinitions?.entities || [])}
+      Entities context: ${JSON.stringify(entitiesFound)}
 
       Be conservative — reject if uncertain. Only approve if you're confident the change is a net improvement.`,
       { label: `validate:${evo.target}`, schema: {
@@ -324,7 +286,7 @@ phase('Report');
 const report = {
   timestamp: new Date().toISOString(),
   summary: {
-    conversations_analyzed: transcripts?.length || 0,
+    conversations_analyzed: observationReport?.source_conversations_count || 0,
     signals_found: observationReport?.signals?.length || 0,
     opportunities_identified: opportunities.length,
     evolutions_generated: validEvolutions.length,
@@ -367,11 +329,13 @@ log('═════════════════════════
 phase('Discover');
 
 const workflowPatterns = await agent(
-  `You are the Workflow Discoverer Agent. Scan the conversation transcripts for repeatable
+  `You are the Workflow Discoverer Agent. Scan the collected data for repeatable
    multi-step workflows that are NOT yet captured as existing skills.
 
-   Transcripts: ${JSON.stringify(transcripts?.slice(0, 50) || [])}
-   Existing entities: ${JSON.stringify(entityDefinitions?.entities || [])}
+   Collected project data:
+   ${fs}
+   Existing entities (from observer):
+   ${JSON.stringify(entitiesFound)}
 
    Find patterns where:
    1. The user repeatedly executes similar command sequences (≥3 times)
@@ -415,48 +379,62 @@ if (discoveredPatterns.length === 0) {
 }
 
 // ============================================================
-// Necessity Evaluation — 6道关卡
+// Necessity Evaluation — 7道关卡
+// G0 脚本优先（预计算）+ G1/G5/G6 预计算，G2/G3/G4 留给 agent
 // ============================================================
 phase('Evaluate Necessity');
 
 const evaluatedPatterns = await pipeline(
   discoveredPatterns,
   async (pattern) => {
+    // --- 预计算：G0 脚本优先（封闭世界 vs 开放世界）---
+    const coreSequence = pattern.core_sequence || [];
+    const closedWorldOps = ['grep','find','ls','cat','wc','sort','uniq','head','tail','git status','git log','git diff','npm run lint','npm test','yarn build','eslint','prettier','docker build','kubectl apply','curl','jq','sed','awk'];
+    const openWorldPatterns = ['analyze','判断','建议','推荐','review','分析','debug','排查','修复','fix','原因','根因','是否合理','应该如何'];
+    const closedCount = coreSequence.filter(s => closedWorldOps.some(kw => (s.action||s.command||'').toLowerCase().includes(kw))).length;
+    const openCount = coreSequence.filter(s => openWorldPatterns.some(kw => (s.action||s.command||'').toLowerCase().includes(kw))).length;
+    const closedRatio = coreSequence.length > 0 ? closedCount / coreSequence.length : 0;
+    const gate0_pass = closedRatio >= 0.8 && openCount === 0;
+
+    if (gate0_pass) {
+      return { ...pattern, evaluation: { verdict: { should_create_skill: false, should_create_script: true, recommended_action: 'script', reasoning: `Gate 0: 封闭世界 — 脚本更高效准确` }, gates: { gate_0_script_first: { passed: true } } } };
+    }
+
+    // --- 预计算：G1/G5/G6 ---
+    const gate1_pass = (pattern.occurrences || 0) >= 3;
+    const steps = coreSequence.length;
+    const complexityScore = [steps >= 3, (pattern.tools_used||[]).length >= 1, (pattern.variations||[]).length >= 1, (pattern.expected_outputs||[]).length >= 1].filter(Boolean).length;
+    const gate5_pass = complexityScore >= 2;
+    const overlaps = (pattern.trigger_phrases || []).filter(p => entitiesFound.filter(e => e.type === 'skill').map(e => (e.content_summary||'')).join(' ').toLowerCase().includes(p.toLowerCase()));
+    const gate6_pass = overlaps.length === 0;
+
+    const precomputed = [
+      `❌ Gate 0: ${openCount > 0 ? '开放世界操作 → 需LLM推理' : `确定性占比${Math.round(closedRatio*100)}%<80%`}`,
+      `Gate 1: ${pattern.occurrences||0}次 ${gate1_pass?'≥3→PASS':'<3→FAIL'}`,
+      `Gate 5: ${complexityScore}/4 ${gate5_pass?'≥2→PASS':'<2→FAIL'}`,
+      `Gate 6: ${gate6_pass?'无冲突→PASS':`冲突:[${overlaps}]→FAIL`}`,
+    ];
+
     const evaluation = await agent(
-      `You are the Necessity Evaluator. Your default answer is NO. Only say YES if the
-       pattern truly warrants a new skill and cannot be handled by a simpler mechanism.
+      `You are the Necessity Evaluator. Default: NO.
 
-       Pattern to evaluate:
-       ${JSON.stringify(pattern)}
+       Pattern: ${JSON.stringify(pattern)}
+       Existing: ${JSON.stringify(entitiesFound)}
 
-       Existing entities (for overlap check):
-       ${JSON.stringify(entityDefinitions?.entities || [])}
+       PRE-COMPUTED (facts, do NOT re-evaluate):
+       ${precomputed.join('\n')}
 
-       Apply the 6 gates in order. STOP at the first NO:
+       If G1/G5/G6 failed → output FAIL, skip G2/G3/G4.
+       Only if all passed, evaluate:
+       Gate 2 (Stability): Sequence converged?
+       Gate 3 (Scope): Triggers/inputs/outputs clear?
+       Gate 4 (Overlap): Existing skill covers <80%?
 
-       Gate 1 (Frequency): ≥3 occurrences in last 50 conversations?
-       Gate 2 (Stability): Has the core sequence converged and stabilized?
-       Gate 3 (Scope): Clear triggers, inputs, outputs, and termination?
-       Gate 4 (Overlap): No existing skill covers ≥80% of this?
-       Gate 5 (Complexity): ≥2 of [≥3 steps, specific tools, branching logic, specific output format]?
-       Gate 6 (Routing): No trigger ambiguity with existing skills?
-
-       Return detailed per-gate results and your verdict.`,
+       Return verdict.`,
       { label: `necessity:${pattern.pattern_id}`, schema: {
-        type: 'object',
-        properties: {
-          evaluation_id: { type: 'string' },
-          pattern_id: { type: 'string' },
-          verdict: {
-            type: 'object',
-            properties: {
-              should_create_skill: { type: 'boolean' },
-              recommended_action: { type: 'string', enum: ['bootstrap_skill', 'memory', 'evolve_existing', 'ignore'] },
-              reasoning: { type: 'string' },
-            },
-          },
+        type: 'object', properties: {
+          verdict: { type: 'object', properties: { should_create_skill: { type: 'boolean' }, recommended_action: { type: 'string' }, reasoning: { type: 'string' } } },
           gates: { type: 'object' },
-          alternatives: { type: 'array' },
         },
       }}
     );
@@ -464,53 +442,44 @@ const evaluatedPatterns = await pipeline(
   }
 );
 
-const passed = evaluatedPatterns.filter(Boolean).filter(p =>
-  p.evaluation?.verdict?.should_create_skill === true
-);
-const memoryOnly = evaluatedPatterns.filter(Boolean).filter(p =>
-  p.evaluation?.verdict?.recommended_action === 'memory'
-);
-const evolveInstead = evaluatedPatterns.filter(Boolean).filter(p =>
-  p.evaluation?.verdict?.recommended_action === 'evolve_existing'
-);
-const rejectedPatterns = evaluatedPatterns.filter(Boolean).filter(p =>
-  p.evaluation?.verdict?.recommended_action === 'ignore'
-);
+const passed = evaluatedPatterns.filter(Boolean).filter(p => p.evaluation?.verdict?.should_create_skill === true);
+const scriptsOnly = evaluatedPatterns.filter(Boolean).filter(p => p.evaluation?.verdict?.should_create_script === true);
+const memoryOnly = evaluatedPatterns.filter(Boolean).filter(p => p.evaluation?.verdict?.recommended_action === 'memory');
+const evolveInstead = evaluatedPatterns.filter(Boolean).filter(p => p.evaluation?.verdict?.recommended_action === 'evolve_existing');
+const rejectedPatterns = evaluatedPatterns.filter(Boolean).filter(p => p.evaluation?.verdict?.recommended_action === 'ignore');
 
-log(`Necessity evaluation: ${passed.length} pass, ${memoryOnly.length} → memory, ${evolveInstead.length} → evolve existing, ${rejectedPatterns.length} rejected`);
+log(`Necessity: ${scriptsOnly.length}→script, ${passed.length}→skill, ${memoryOnly.length}→memory, ${evolveInstead.length}→evolve, ${rejectedPatterns.length} rejected`);
 
-// Create memory entries for patterns that failed at gates
+// Memory entries
 if (memoryOnly.length > 0) {
-  log(`Creating ${memoryOnly.length} memory entries for simpler patterns...`);
-  await pipeline(
-    memoryOnly,
-    (p) => agent(
-      `Create a memory entry for this pattern that didn't warrant a full skill:
-       Pattern: ${JSON.stringify(p)}
-       Suggested memory content: ${JSON.stringify(p.evaluation?.alternatives?.[0])}
-
-       Write the memory file. Keep it concise — one clear preference or lesson.`,
-      { label: `memory:${p.pattern_id}` }
-    )
-  );
-}
-
-if (evolveInstead.length > 0) {
-  log(`${evolveInstead.length} patterns → recommend evolving existing skills instead`);
-  // These will be picked up by the next evolution cycle
+  await pipeline(memoryOnly, (p) => agent(`Create memory: ${JSON.stringify(p)}`, { label: `memory:${p.pattern_id}` }));
 }
 
 // ============================================================
-// Skill Bootstrapping — 仅对通过6关的模式
+// Bootstrap: Scripts (Gate 0) + Skills (Gate 1-6)
 // ============================================================
 phase('Bootstrap');
 
+// Script generation（封闭世界 → 确定性脚本）
+const generatedScripts = [];
+if (scriptsOnly.length > 0) {
+  for (const pattern of scriptsOnly) {
+    const s = await agent(
+      `SCRIPT MODE: Generate bash script + thin skill wrapper for closed-world pattern:
+       ${JSON.stringify(pattern)}
+       Save: .claude/scripts/<name>.sh + .claude/skills/<name>.md (thin wrapper)`,
+      { label: `script:${pattern.pattern_id}`, schema: { type: 'object', properties: { script_path: { type: 'string' }, script_name: { type: 'string' } } } }
+    );
+    generatedScripts.push(s);
+  }
+}
+
+// Skill generation（开放世界 → 完整 skill）
 const bootstrappedSkills = [];
 if (passed.length > 0) {
   for (const pattern of passed) {
     const skillDef = await agent(
-      `You are the Skill Bootstrapper. Create a complete, well-structured skill definition
-       from this validated workflow pattern:
+      `SKILL MODE: Create full skill definition from validated pattern:
 
        Pattern: ${JSON.stringify(pattern)}
        Necessity verdict: ${JSON.stringify(pattern.evaluation)}
@@ -557,23 +526,19 @@ log(`   ✅ Auto-applied: ${autoApply.length}`);
 log(`   ⏳ Pending review: ${pending.length}`);
 log(`   ❌ Rejected: ${rejected.length}`);
 log('══ 引导链路 (Bootstrap) ══');
-log(`   🏭 Skills created: ${bootstrappedSkills.length}`);
-log(`   📝 Memory entries: ${memoryOnly.length}`);
-log(`   🔧 → Evolve existing: ${evolveInstead.length}`);
-log(`   🗑️ Rejected: ${rejectedPatterns.length}`);
+log(`   🔧 Scripts: ${generatedScripts.length} (封闭世界→确定性执行)`);
+log(`   🏭 Skills: ${bootstrappedSkills.length} (开放世界→LLM推理)`);
+log(`   📝 Memory: ${memoryOnly.length} | 🔧→Evolve: ${evolveInstead.length} | 🗑️Rejected: ${rejectedPatterns.length}`);
 log('═══════════════════════════════════════');
 
 return {
   ...report,
   bootstrap: {
     patterns_discovered: discoveredPatterns.length,
-    passed_6_gates: passed.length,
+    gate_0_scripts: generatedScripts.length,
+    passed_7_gates: passed.length,
+    scripts_created: generatedScripts.map(s => s?.script_name).filter(Boolean),
     skills_created: bootstrappedSkills.map(s => s?.skill_name).filter(Boolean),
     memory_entries_created: memoryOnly.length,
-    evolve_instead: evolveInstead.map(p => p?.pattern_id).filter(Boolean),
-    rejected: rejectedPatterns.map(p => ({
-      pattern: p?.pattern_id,
-      reason: p?.evaluation?.verdict?.reasoning,
-    })).filter(Boolean),
   },
 };

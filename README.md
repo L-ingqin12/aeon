@@ -28,9 +28,11 @@ AEON：观察 → 分析 → 进化 → 验证 → 部署    (Evolve 链路)
       发现 → 必要性判断 → 引导创建 skill   (Bootstrap 链路)
 ```
 
-### 核心原则：如无必要，勿增实体
+### 核心原则
 
-**新建 skill 是最后选择，不是默认选择。** AEON 在创建任何新 skill 之前，会通过 6 道关卡严格判断是否必要。大部分重复模式用 memory 记录偏好就够了。
+**脚本优先 (Script-First)**: Skills 封装思考，脚本封装执行。封闭世界问题用脚本（零 token，100% 准确），开放世界问题用 Skill。
+
+**如无必要，勿增实体**: 新建 skill 是最后选择。脚本 > Memory > 进化已有 > 新建。7 道关卡严格把关。
 
 ### 真实场景
 
@@ -125,15 +127,15 @@ aeon/
 ├── LICENSE                             # MIT 许可证
 │
 ├── skills/
-│   └── evolve.md                       # /evolve skill 定义（Claude Code 可直接使用）
+│   └── evolve.md                       # /evolve skill 定义
 │
 ├── agents/
-│   ├── observer.md                     # Observer Agent — 对话信号提取（进化链路）
-│   ├── evolver.md                      # Evolver Agent — 核心进化引擎（进化链路）
-│   ├── fitness-evaluator.md           # Fitness Evaluator — 质量守门人（进化链路）
-│   ├── workflow-discoverer.md          # Workflow Discoverer — 重复模式发现（引导链路）
-│   ├── necessity-evaluator.md          # Necessity Evaluator — 6关必要性判断（引导链路）
-│   └── skill-bootstrapper.md           # Skill Bootstrapper — 新 skill 生成（引导链路）
+│   ├── observer.md                     # Observer — 对话信号提取
+│   ├── evolver.md                      # Evolver — 核心进化引擎
+│   ├── fitness-evaluator.md           # Fitness Evaluator — 质量守门人
+│   ├── workflow-discoverer.md          # Workflow Discoverer — 重复模式发现
+│   ├── necessity-evaluator.md          # Necessity Evaluator — 7关必要性判断
+│   └── skill-bootstrapper.md           # Skill Bootstrapper — script/skill 双模式生成
 │
 ├── tools/
 │   └── evolution-engine.js            # 完整双链路 Workflow 脚本（概念参考实现）
@@ -157,18 +159,25 @@ aeon/
 | **major** | 高 | ❌ 需确认 | 重写指令、行为变更 |
 | **experimental** | 未知 | 🔬 A/B测试 | 新策略探索 |
 
-## 必要性判断（6 道关卡）
-
-引导链路中，每个候选模式必须通过全部 6 关才会被创建为 skill。**任何一关失败，走更简单的替代路径。**
+## 必要性判断（7 道关卡）
 
 | 关卡 | 问题 | 失败路径 |
 |------|------|---------|
+| **G0 脚本优先** ⭐ | 封闭世界（已知路径+结果，异常可枚举）？ | 🔧 脚本 + 薄 wrapper |
 | **G1 频率** | 最近50次对话出现 ≥3 次？ | 🗑️ 不处理 |
 | **G2 稳定性** | 步骤序列已收敛？ | 📝 memory + "evolving" |
 | **G3 边界** | 触发/输入/输出清晰？ | 📝 memory |
 | **G4 重叠** | 现有 skill 不覆盖？ | 🔧 进化现有 skill |
-| **G5 复杂度** | ≥2/4 复杂度指标？ | 📝 memory（太简单） |
-| **G6 路由** | 不造成触发冲突？ | ⚠️ 重新设计或放弃 |
+| **G5 复杂度** | ≥2/4 复杂度指标？ | 📝 memory |
+| **G6 路由** | 不造成触发冲突？ | ⚠️ 重新设计 |
+
+### Script vs Skill
+
+| | 脚本 | Skill |
+|---|------|------|
+| **问题** | 封闭世界 | 开放世界 |
+| **路径** | 确定，已知分支 | 不确定，需要分析 |
+| **示例** | `grep ERROR \| sort \| uniq -c` | "分析这些错误的根因" |
 
 ## 变异算子（进化链路）
 
