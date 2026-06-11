@@ -1,0 +1,75 @@
+{
+  "_comment": "AEON Evolution Hooks — 自动触发进化循环的 Hook 配置",
+  "_usage": "将这些配置合并到你的 .claude/settings.json 或 .claude/settings.local.json 中",
+
+  "hooks": {
+    "Stop": [
+      {
+        "_comment": "每次对话结束触发增量进化（低风险变更自动应用）",
+        "matcher": "",
+        "command": "claude --skill evolve --mode incremental --source hook:Stop"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "_comment": "当 memory 文件被更新时，检测是否有连锁更新需要",
+        "matcher": "Write",
+        "command": "[[ \"${CLAUDE_TOOL_FILE_PATH}\" == *memory* ]] && echo 'memory_updated' || true"
+      },
+      {
+        "_comment": "当 skill 被频繁修正时标记",
+        "matcher": "Edit",
+        "command": "[[ \"${CLAUDE_TOOL_FILE_PATH}\" == *skills* ]] && echo 'skill_edited' || true"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "_comment": "在执行高风险编辑前检查进化历史",
+        "matcher": "Write",
+        "command": "[[ \"${CLAUDE_TOOL_FILE_PATH}\" == *.claude/* ]] && echo 'config_file_write' || true"
+      }
+    ],
+    "Notification": [
+      {
+        "_comment": "当有 pending review 的进化时通知用户",
+        "matcher": "Start",
+        "command": "test -f .claude/aeon/pending-review.md && echo '📋 Pending evolutions await review: /evolve review' || true"
+      }
+    ]
+  },
+
+  "_aeon_config": {
+    "auto_evolution": {
+      "enabled": true,
+      "mode": "incremental",
+      "trigger_on": {
+        "conversation_end": true,
+        "correction_threshold": 3,
+        "success_threshold": 5,
+        "schedule": "0 9 * * 1"
+      },
+      "auto_apply": ["prompt_clarify", "example_add", "knowledge_update", "trigger_tune"],
+      "require_review": ["tool_add", "tool_remove", "strategy_inject", "constraint_add"],
+      "require_approval": ["model_change", "core_behavior_change", "cross_entity_change"]
+    },
+    "fitness": {
+      "regression_test_conversations": 3,
+      "adversarial_agents": 2,
+      "auto_apply_threshold": 0.85,
+      "review_threshold": 0.7,
+      "rollback_on_regression": 0.1
+    },
+    "limits": {
+      "max_evolutions_per_day": 5,
+      "max_auto_apply_per_day": 3,
+      "conversation_lookback": 50,
+      "cooldown_hours_per_entity": 4
+    },
+    "storage": {
+      "evolution_history": ".claude/aeon/evolution-history.jsonl",
+      "pending_review": ".claude/aeon/pending-review.md",
+      "genomes": ".claude/aeon/genomes/",
+      "rejected_log": ".claude/aeon/rejected.jsonl"
+    }
+  }
+}

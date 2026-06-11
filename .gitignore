@@ -1,0 +1,22 @@
+# AEON — Agent Evolution & Optimization Network
+# https://github.com/L-ingqin12/aeon
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# AEON runtime (generated locally)
+.claude/aeon/genomes/
+.claude/aeon/evolution-history.jsonl
+.claude/aeon/pending-review.md
+.claude/aeon/rejected.jsonl
+
+# Node (if evolution-engine.js is used standalone)
+node_modules/
