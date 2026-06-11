@@ -17,6 +17,11 @@ Thumbs.db
 .claude/aeon/evolution-history.jsonl
 .claude/aeon/pending-review.md
 .claude/aeon/rejected.jsonl
+.opencode/aeon/genomes/
+.opencode/aeon/evolution-history.jsonl
+.opencode/aeon/pending-review.md
+.opencode/aeon/rejected.jsonl
+.opencode/aeon/memory/
 
 # Node (if evolution-engine.js is used standalone)
 node_modules/

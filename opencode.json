@@ -1,0 +1,61 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "theme": "opencode",
+  "autoupdate": true,
+
+  "aeon": {
+    "_comment": "AEON: Agent Evolution & Optimization Network",
+    "_principle": "如无必要，勿增实体 — 新建 skill 是最后选择",
+
+    "auto_evolution": {
+      "enabled": true,
+      "mode": "incremental",
+      "trigger_on": {
+        "conversation_end": true,
+        "correction_threshold": 3,
+        "success_threshold": 5
+      },
+      "auto_apply": ["prompt_clarify", "example_add", "knowledge_update", "trigger_tune"],
+      "require_review": ["tool_add", "tool_remove", "strategy_inject", "constraint_add"],
+      "require_approval": ["model_change", "core_behavior_change", "cross_entity_change"]
+    },
+
+    "bootstrap": {
+      "enabled": true,
+      "necessity_gates": {
+        "gate_1_frequency_min": 3,
+        "gate_5_complexity_min": 2,
+        "conversation_lookback": 50
+      },
+      "default_action_on_fail": "memory"
+    },
+
+    "fitness": {
+      "regression_test_conversations": 3,
+      "adversarial_agents": 2,
+      "auto_apply_threshold": 0.85,
+      "review_threshold": 0.7,
+      "rollback_on_regression": 0.1
+    },
+
+    "limits": {
+      "max_evolutions_per_day": 5,
+      "max_auto_apply_per_day": 3,
+      "cooldown_hours_per_entity": 4
+    },
+
+    "storage": {
+      "evolution_history": ".opencode/aeon/evolution-history.jsonl",
+      "pending_review": ".opencode/aeon/pending-review.md",
+      "genomes": ".opencode/aeon/genomes/",
+      "rejected_log": ".opencode/aeon/rejected.jsonl"
+    }
+  },
+
+  "skills": {
+    "paths": [
+      ".opencode/skill",
+      ".claude/skills"
+    ]
+  }
+}

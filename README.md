@@ -64,12 +64,9 @@ AEON 有两条互补链路：
 
 ## 快速开始
 
-### 安装
-
-将 AEON 的 skill 和 agent 定义添加到你的 Claude Code 项目中：
+### Claude Code 安装
 
 ```bash
-# 克隆 AEON
 git clone https://github.com/L-ingqin12/aeon.git
 
 # 将 skill 添加到你的项目
@@ -82,6 +79,28 @@ cp -r aeon/agents/ .claude/agents/aeon/
 mkdir -p .claude/aeon/genomes
 echo '[]' > .claude/aeon/evolution-history.jsonl
 ```
+
+### OpenCode + oh-my-openagent 安装
+
+```bash
+git clone https://github.com/L-ingqin12/aeon.git /tmp/aeon-install
+
+# 复制 agent 定义（注册为 subagent）
+cp /tmp/aeon-install/.opencode/agent/aeon-*.md .opencode/agent/
+
+# 复制 command（/evolve 入口）
+cp /tmp/aeon-install/.opencode/command/evolve.md .opencode/command/
+
+# 复制 skill（自动被发现和注入）
+cp -r /tmp/aeon-install/.opencode/skill/aeon-evolve .opencode/skill/
+
+# 合并 opencode.json 中的 aeon 配置块到你的 opencode.json
+# 初始化 AEON 存储
+mkdir -p .opencode/aeon/{genomes,memory}
+echo '[]' > .opencode/aeon/evolution-history.jsonl
+```
+
+> 📖 完整跨平台适配说明见 [PLATFORM-ADAPTER.md](PLATFORM-ADAPTER.md)
 
 ### 第一次使用
 
