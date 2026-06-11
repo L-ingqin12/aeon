@@ -28,70 +28,34 @@ export const meta = {
 };
 
 // ============================================================
-// Phase 1: Collect — 收集数据
+// Phase 1: Collect — 收集数据（确定性操作，零 agent 调用）
 // ============================================================
 phase('Collect');
 
-const transcripts = await agent(
-  `List all conversation transcript files from .claude/transcripts/ or similar locations.
-   Return the file paths of the most recent 50 conversations as a JSON array.
-   If no transcripts directory exists, return an empty array.`,
-  { label: 'find-transcripts', schema: { type: 'array', items: { type: 'string' } } }
+// 直接用工具列举文件，不浪费 agent token
+const fs = await agent(
+  `Run these commands and return the raw output:
+   1. ls .claude/transcripts/ 2>/dev/null | tail -50 || echo "[]"
+   2. find . -path '*/.claude/skills/*.md' -o -path '*/agents/*.md' -o -path '*/memory/*.md' -o -name 'CLAUDE.md' 2>/dev/null | head -50
+   3. cat .claude/aeon/evolution-history.jsonl 2>/dev/null | tail -20 || echo "[]"
+   Return ONLY the raw command outputs, no analysis.`,
+  { label: 'collect-files' }
 );
 
-const entityDefinitions = await agent(
-  `Scan the project for all evolvable entities:
-   - Skills: .claude/skills/*.md
-   - Agents: look for agent definitions
-   - Memory files: memory/*.md or .claude/projects/*/memory/*.md
-   - CLAUDE.md files
-   - Workflow scripts: .claude/workflows/*.js
-
-   For each, return: { type, name, path, current_version (if known), content_summary }`,
-  { label: 'find-entities', schema: {
-    type: 'object',
-    properties: {
-      entities: { type: 'array', items: {
-        type: 'object',
-        properties: {
-          type: { type: 'string' },
-          name: { type: 'string' },
-          path: { type: 'string' },
-          current_version: { type: 'string' },
-          content_summary: { type: 'string' },
-        },
-      }},
-    },
-  }}
-);
-
-const evolutionHistory = await agent(
-  `Read the evolution history file if it exists (.claude/aeon/evolution-history.jsonl).
-   Return the last 20 evolution records as a JSON array.
-   If the file doesn't exist, return an empty array.`,
-  { label: 'read-evolution-history', schema: {
-    type: 'array', items: { type: 'object' },
-  }}
-);
-
-log(`Collected ${transcripts?.length || 0} transcripts, ${entityDefinitions?.entities?.length || 0} entities, ${evolutionHistory?.length || 0} prior evolutions`);
+// Phase 1 是纯 I/O — 1 次 agent 调用就够了（仅用于执行 bash）
+// 对比旧版：3 次 agent 调用，其中 2 次纯属浪费
 
 // ============================================================
-// Phase 2: Observe — 提取信号
+// Phase 2: Observe — 提取信号（需要语义理解，保留 agent）
 // ============================================================
 phase('Observe');
 
 const observationReport = await agent(
-  `You are the Observer Agent. Analyze the following conversation transcripts and entity definitions
-   to extract evolution signals.
+  `You are the Observer Agent. Below is raw collected data from the project.
+   Analyze it to extract evolution signals.
 
-   Transcripts available: ${JSON.stringify(transcripts?.slice(0, 20) || [])}
-
-   Entities observed:
-   ${JSON.stringify(entityDefinitions?.entities || [])}
-
-   Prior evolution history:
-   ${JSON.stringify(evolutionHistory?.slice(0, 10) || [])}
+   Raw collected data:
+   ${fs}
 
    Extract:
    1. Correction signals (user says "no", "wrong", "should be X")
@@ -138,6 +102,7 @@ const observationReport = await agent(
 );
 
 const opportunities = observationReport?.improvement_opportunities || [];
+const entitiesFound = observationReport?.entities_observed || [];
 log(`Observer found ${observationReport?.signals?.length || 0} signals → ${opportunities.length} improvement opportunities`);
 
 if (!opportunities.length) {
@@ -169,7 +134,8 @@ const evolutions = await pipeline(
 
       Opportunity: ${JSON.stringify(opp)}
 
-      Current entity definitions: ${JSON.stringify(entityDefinitions)}
+      Current entity definitions (from scan):
+      ${JSON.stringify(entitiesFound)}
 
       Apply the appropriate mutation operator (prompt_clarify, tool_add, tool_remove,
       strategy_inject, trigger_tune, knowledge_update, example_add, constraint_add).
@@ -224,7 +190,7 @@ const validatedEvolutions = await pipeline(
       2. Adversarial test: how could this change fail?
       3. Consistency check: does this conflict with other entities?
 
-      Entities context: ${JSON.stringify(entityDefinitions?.entities || [])}
+      Entities context: ${JSON.stringify(entitiesFound)}
 
       Be conservative — reject if uncertain. Only approve if you're confident the change is a net improvement.`,
       { label: `validate:${evo.target}`, schema: {
@@ -324,7 +290,7 @@ phase('Report');
 const report = {
   timestamp: new Date().toISOString(),
   summary: {
-    conversations_analyzed: transcripts?.length || 0,
+    conversations_analyzed: observationReport?.source_conversations_count || 0,
     signals_found: observationReport?.signals?.length || 0,
     opportunities_identified: opportunities.length,
     evolutions_generated: validEvolutions.length,
@@ -367,11 +333,13 @@ log('═════════════════════════
 phase('Discover');
 
 const workflowPatterns = await agent(
-  `You are the Workflow Discoverer Agent. Scan the conversation transcripts for repeatable
+  `You are the Workflow Discoverer Agent. Scan the collected data for repeatable
    multi-step workflows that are NOT yet captured as existing skills.
 
-   Transcripts: ${JSON.stringify(transcripts?.slice(0, 50) || [])}
-   Existing entities: ${JSON.stringify(entityDefinitions?.entities || [])}
+   Collected project data:
+   ${fs}
+   Existing entities (from observer):
+   ${JSON.stringify(entitiesFound)}
 
    Find patterns where:
    1. The user repeatedly executes similar command sequences (≥3 times)
@@ -415,31 +383,115 @@ if (discoveredPatterns.length === 0) {
 }
 
 // ============================================================
-// Necessity Evaluation — 6道关卡
+// Necessity Evaluation — 7道关卡 (Gate 0 Script-First + Gates 1-6)
+// G0/G1/G5/G6 预计算（确定性，零 token），G2/G3/G4 留给 agent 语义判断
 // ============================================================
 phase('Evaluate Necessity');
 
 const evaluatedPatterns = await pipeline(
   discoveredPatterns,
   async (pattern) => {
+    // --- 预计算：G0 脚本优先（封闭世界 vs 开放世界）---
+    // 关键判断：路径和结果是否确定？异常是否可枚举？
+    const coreSequence = pattern.core_sequence || [];
+    // 封闭世界操作：输入固定、输出固定、异常可预知
+    const closedWorldOps = [
+      'grep', 'find', 'ls', 'cat', 'wc', 'sort', 'uniq', 'head', 'tail',
+      'git status', 'git log', 'git diff', 'git branch',
+      'npm run lint', 'npm run typecheck', 'npm test', 'yarn build',
+      'eslint', 'prettier', 'tsc --noEmit',
+      'docker build', 'kubectl apply', 'kubectl get',
+      'curl', 'jq', 'sed', 'awk', 'cp', 'mv', 'rm',
+    ];
+    // 开放世界操作：需要推理、判断、情境分析
+    const openWorldPatterns = [
+      'analyze', '判断', '建议', '推荐', 'review', '分析',
+      'debug', '排查', '修复', 'fix', '原因', '根因',
+      '是否合理', '是否正确', '应该', '如何',
+    ];
+    const closedWorldSteps = coreSequence.filter(step => {
+      const action = (step.action || step.command || '').toLowerCase();
+      return closedWorldOps.some(kw => action.includes(kw));
+    });
+    const openWorldSteps = coreSequence.filter(step => {
+      const action = (step.action || step.command || '').toLowerCase();
+      return openWorldPatterns.some(kw => action.includes(kw));
+    });
+    // 封闭世界操作占比高 + 无开放世界操作 → 脚本
+    const closedRatio = coreSequence.length > 0 ? closedWorldSteps.length / coreSequence.length : 0;
+    const hasOpenWorldOps = openWorldSteps.length > 0;
+    const gate0_pass = closedRatio >= 0.8 && !hasOpenWorldOps;
+
+    // --- 预计算：G1 频率（纯计数）---
+    const occurrences = pattern.occurrences || 0;
+    const gate1_pass = occurrences >= 3;
+
+    // --- 预计算：G5 复杂度（可量化指标）---
+    const steps = coreSequence.length;
+    const hasSpecificTools = (pattern.tools_used || []).length >= 1;
+    const hasBranching = (pattern.variations || []).length >= 1;
+    const hasOutputFormat = pattern.expected_outputs?.length >= 1;
+    const complexityScore = [steps >= 3, hasSpecificTools, hasBranching, hasOutputFormat].filter(Boolean).length;
+    const gate5_pass = complexityScore >= 2;
+
+    // --- 预计算：G6 路由冲突（字符串匹配）---
+    const triggerPhrases = pattern.trigger_phrases || [];
+    const existingTriggers = entitiesFound
+      .filter(e => e.type === 'skill' || e.type === 'agent')
+      .map(e => e.content_summary || '')
+      .join(' ');
+    const overlaps = triggerPhrases.filter(phrase =>
+      existingTriggers.toLowerCase().includes(phrase.toLowerCase())
+    );
+    const gate6_pass = overlaps.length === 0;
+
+    // --- 构建预计算结果 ---
+    const precomputedGates = [];
+    if (gate0_pass) {
+      precomputedGates.push(`✅ Gate 0 (Script-First): 封闭世界问题 — ${Math.round(closedRatio * 100)}% 确定性操作，无开放世界判断 → PASS → 生成脚本`);
+    } else if (hasOpenWorldOps) {
+      precomputedGates.push(`❌ Gate 0 (Script-First): 包含开放世界操作 (${openWorldSteps.map(s => s.action || s.command).join(', ')}) → 需要 LLM 推理 → 继续 skill 评估`);
+    } else {
+      precomputedGates.push(`❌ Gate 0 (Script-First): 确定性操作占比 ${Math.round(closedRatio * 100)}% < 80% → 继续 skill 评估`);
+    }
+    if (gate0_pass) {
+      // Gate 0 通过 — 封闭世界问题，脚本即可 → 跳过后续
+      return {
+        ...pattern,
+        evaluation: {
+          verdict: {
+            should_create_skill: false,
+            should_create_script: true,
+            recommended_action: 'script',
+            reasoning: `Gate 0: 封闭世界问题 — 路径和结果确定，异常可枚举 → 脚本更高效准确`,
+          },
+          gates: {
+            gate_0_script_first: { passed: true, closed_ratio: closedRatio },
+          },
+        },
+      };
+    }
+    precomputedGates.push(`Gate 1 (Frequency): ${occurrences}次 ${gate1_pass ? '≥3 → PASS' : '<3 → FAIL'}`);
+    precomputedGates.push(`Gate 5 (Complexity): ${complexityScore}/4 ${gate5_pass ? '≥2 → PASS' : '<2 → FAIL'}`);
+    precomputedGates.push(`Gate 6 (Routing): ${gate6_pass ? '无冲突 → PASS' : `冲突: [${overlaps.join(', ')}] → FAIL`}`);
+
+    // --- G2/G3/G4 需要语义判断，留给 agent ---
     const evaluation = await agent(
-      `You are the Necessity Evaluator. Your default answer is NO. Only say YES if the
-       pattern truly warrants a new skill and cannot be handled by a simpler mechanism.
+      `You are the Necessity Evaluator. Default answer: NO.
 
-       Pattern to evaluate:
-       ${JSON.stringify(pattern)}
+       Pattern: ${JSON.stringify(pattern)}
+       Existing entities: ${JSON.stringify(entitiesFound)}
 
-       Existing entities (for overlap check):
-       ${JSON.stringify(entityDefinitions?.entities || [])}
+       PRE-COMPUTED FACTS (do NOT re-evaluate):
+       ${precomputedGates.join('\n')}
 
-       Apply the 6 gates in order. STOP at the first NO:
+       If G1/G5/G6 already failed → output pre-computed FAIL verdict, skip G2/G3/G4.
+       If all pre-computed passed → ONLY evaluate:
+       Gate 2 (Stability): Sequence converged?
+       Gate 3 (Scope): Triggers/inputs/outputs clear?
+       Gate 4 (Overlap): Existing skill covers <80%?
 
-       Gate 1 (Frequency): ≥3 occurrences in last 50 conversations?
-       Gate 2 (Stability): Has the core sequence converged and stabilized?
-       Gate 3 (Scope): Clear triggers, inputs, outputs, and termination?
-       Gate 4 (Overlap): No existing skill covers ≥80% of this?
-       Gate 5 (Complexity): ≥2 of [≥3 steps, specific tools, branching logic, specific output format]?
-       Gate 6 (Routing): No trigger ambiguity with existing skills?
+       Return per-gate results + final verdict.`,
 
        Return detailed per-gate results and your verdict.`,
       { label: `necessity:${pattern.pattern_id}`, schema: {
@@ -467,6 +519,9 @@ const evaluatedPatterns = await pipeline(
 const passed = evaluatedPatterns.filter(Boolean).filter(p =>
   p.evaluation?.verdict?.should_create_skill === true
 );
+const scriptsOnly = evaluatedPatterns.filter(Boolean).filter(p =>
+  p.evaluation?.verdict?.should_create_script === true
+);
 const memoryOnly = evaluatedPatterns.filter(Boolean).filter(p =>
   p.evaluation?.verdict?.recommended_action === 'memory'
 );
@@ -477,7 +532,7 @@ const rejectedPatterns = evaluatedPatterns.filter(Boolean).filter(p =>
   p.evaluation?.verdict?.recommended_action === 'ignore'
 );
 
-log(`Necessity evaluation: ${passed.length} pass, ${memoryOnly.length} → memory, ${evolveInstead.length} → evolve existing, ${rejectedPatterns.length} rejected`);
+log(`Necessity evaluation: ${scriptsOnly.length} → script, ${passed.length} → skill, ${memoryOnly.length} → memory, ${evolveInstead.length} → evolve existing, ${rejectedPatterns.length} rejected`);
 
 // Create memory entries for patterns that failed at gates
 if (memoryOnly.length > 0) {
@@ -501,10 +556,50 @@ if (evolveInstead.length > 0) {
 }
 
 // ============================================================
-// Skill Bootstrapping — 仅对通过6关的模式
+// Bootstrap: Script Generation（Gate 0 通过） + Skill Generation（Gate 1-6 通过）
 // ============================================================
 phase('Bootstrap');
 
+// --- Script Generation: 封闭世界问题，生成可执行脚本 ---
+const generatedScripts = [];
+if (scriptsOnly.length > 0) {
+  for (const pattern of scriptsOnly) {
+    const scriptResult = await agent(
+      `You are the Skill Bootstrapper in SCRIPT MODE. Generate a bash script for this closed-world workflow:
+
+       Pattern: ${JSON.stringify(pattern)}
+       Scriptable ratio: ${pattern.evaluation?.gates?.gate_0_script_first?.closed_ratio}
+
+       The workflow is deterministic — fixed inputs, fixed outputs, enumerable errors.
+       Generate:
+       1. A bash script (.sh) that executes the workflow deterministically
+       2. A thin SKILL.md wrapper that tells the agent when to run the script and how to interpret output
+
+       Script guidelines:
+       - set -euo pipefail
+       - Comment what each step does
+       - Exit codes for known failure modes
+       - Output plain text that the agent can interpret
+       - No interactive prompts
+
+       Save script to: .opencode/script/<name>.sh (or .claude/scripts/<name>.sh)
+       Save wrapper to: .opencode/skill/<name>/SKILL.md`,
+      { label: `script:${pattern.pattern_id}`, schema: {
+        type: 'object',
+        properties: {
+          script_path: { type: 'string' },
+          skill_wrapper_path: { type: 'string' },
+          script_name: { type: 'string' },
+          summary: { type: 'string' },
+        },
+      }}
+    );
+    generatedScripts.push(scriptResult);
+  }
+}
+log(`Generated ${generatedScripts.length} scripts (closed-world → deterministic execution)`);
+
+// --- Skill Generation: 开放世界问题，生成完整 skill ---
 const bootstrappedSkills = [];
 if (passed.length > 0) {
   for (const pattern of passed) {
@@ -545,19 +640,9 @@ if (passed.length > 0) {
   }
 }
 
-log(`Bootstrapped ${bootstrappedSkills.length} new skills`);
-
-// ============================================================
-// Final Combined Report
-// ============================================================
-log('═══════════════════════════════════════');
-log('🧬 AEON Full Cycle Complete');
-log('══ 进化链路 (Evolve) ══');
-log(`   ✅ Auto-applied: ${autoApply.length}`);
-log(`   ⏳ Pending review: ${pending.length}`);
-log(`   ❌ Rejected: ${rejected.length}`);
 log('══ 引导链路 (Bootstrap) ══');
-log(`   🏭 Skills created: ${bootstrappedSkills.length}`);
+log(`   🔧 Scripts created: ${generatedScripts.length} (封闭世界 → 确定性执行)`);
+log(`   🏭 Skills created: ${bootstrappedSkills.length} (开放世界 → LLM 推理)`);
 log(`   📝 Memory entries: ${memoryOnly.length}`);
 log(`   🔧 → Evolve existing: ${evolveInstead.length}`);
 log(`   🗑️ Rejected: ${rejectedPatterns.length}`);
@@ -567,7 +652,9 @@ return {
   ...report,
   bootstrap: {
     patterns_discovered: discoveredPatterns.length,
-    passed_6_gates: passed.length,
+    gate_0_scripts: generatedScripts.length,
+    passed_7_gates: passed.length,
+    scripts_created: generatedScripts.map(s => s?.script_name).filter(Boolean),
     skills_created: bootstrappedSkills.map(s => s?.skill_name).filter(Boolean),
     memory_entries_created: memoryOnly.length,
     evolve_instead: evolveInstead.map(p => p?.pattern_id).filter(Boolean),
