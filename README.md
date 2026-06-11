@@ -14,38 +14,52 @@ AEON 是一个**元级 Agent 系统**。它不直接解决用户问题，而是*
 
 ## 解决什么问题？
 
+AEON 回答两个问题：
+1. **进化**: "这个已有的 skill 可以更好吗？" → **存量改进**
+2. **引导**: "该有一个新 skill 来做这件事吗？" → **增量生长**
+
 ```
 问题：Skills 和 Agents 写好后是静态的，不会从使用中改进
      ↓
 现象：用户反复纠正同一个问题、Agent 重复犯错、好的策略没有被固化
+      反复执行相同流程、但每次都要从头描述
      ↓
-AEON：观察 → 分析 → 进化 → 验证 → 部署
+AEON：观察 → 分析 → 进化 → 验证 → 部署    (Evolve 链路)
+      发现 → 必要性判断 → 引导创建 skill   (Bootstrap 链路)
 ```
+
+### 核心原则：如无必要，勿增实体
+
+**新建 skill 是最后选择，不是默认选择。** AEON 在创建任何新 skill 之前，会通过 6 道关卡严格判断是否必要。大部分重复模式用 memory 记录偏好就够了。
 
 ### 真实场景
 
 | 场景 | 没有 AEON | 有 AEON |
 |------|----------|---------|
-| 用户3次指出遗漏了安全检查 | 手动修改 skill 指令 | AEON 自动检测并添加 Security 维度 |
-| Agent 发现"先画图再列步骤"100%成功 | 策略丢失在对话记录中 | AEON 将策略注入 Agent 的 system prompt |
-| 用户偏好的框架从 Jest 变为 Vitest | Memory 中的旧信息一直留着 | AEON 自动更新 memory |
-| 10个对话后 code-review skill 需要优化 | 用户忘记/不知道可以改 | AEON 主动建议并生成改进版 |
+| 用户3次指出遗漏了安全检查 | 手动修改 skill 指令 | 🔧 Evolve: 自动添加 Security 维度 |
+| Agent 发现"先画图再列步骤"100%成功 | 策略丢失在对话记录中 | 🔧 Evolve: 策略注入 Agent prompt |
+| 用户偏好的框架从 Jest 变为 Vitest | Memory 中的旧信息一直留着 | 🔧 Evolve: 自动更新 memory |
+| 用户反复手动做 部署→检查→通知 | 每次重新描述流程 | 🌱 Bootstrap: 6关通过后自动创建 deploy skill |
+| 用户3次手动排查日志同一套流程 | 没有意识到可以固化 | 🌱 Bootstrap: 发现模式→判断必要性→创建 log-analyzer skill |
+| 一个简单偏好（"用yarn不用npm"）被误建为skill | 过度工程化 | ⚖️ Necessity Evaluator: Gate 5 拒绝→改为 memory |
 
 ## 核心架构
 
+AEON 有两条互补链路：
+
 ```
-┌─────────────────────────────────────────────────────┐
-│                   AEON System                        │
-│                                                      │
-│   👁️ Observer ──▶ 🔍 Analyzer ──▶ 🧬 Evolver        │
-│   提取信号         识别机会          生成进化          │
-│                                                      │
-│              🛡️ Fitness Evaluator                    │
-│              回归测试 · 对抗验证 · 一致性检查          │
-│                                                      │
-│              🚀 Deployment Manager                   │
-│              Git版本化 · 金丝雀部署 · 一键回滚         │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                      AEON System                         │
+│                                                          │
+│  🔧 进化链路 (Evolve) — 存量优化                          │
+│  👁️Observer → 🔍Analyzer → 🧬Evolver → 🛡️Fitness → 🚀Deploy   │
+│                                                          │
+│  🌱 引导链路 (Bootstrap) — 增量生长                        │
+│  🔎Discoverer → ⚖️Necessity(6关) → 🏭Bootstrapper        │
+│                                                          │
+│  ⚖️ Necessity Evaluator 是守门人                          │
+│  "如无必要，勿增实体" — 默认答案是 NO                       │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ## 快速开始
@@ -76,11 +90,19 @@ echo '[]' > .claude/aeon/evolution-history.jsonl
 ```
 
 运行后你会看到：
+
+**进化链路 (Evolve)**:
 1. 对话分析摘要
-2. 发现的改进机会
+2. 发现的改进机会（已有 skill/agent）
 3. 建议的进化方案
 4. 自动应用的低风险改进
 5. 需要审查的中高风险改进
+
+**引导链路 (Bootstrap)**:
+6. 发现的重复工作流模式
+7. 6 关必要性判断结果
+8. 通过验证的新 skill 定义
+9. 降级为 memory 的简单模式
 
 ### 日常使用
 
@@ -99,19 +121,22 @@ echo '[]' > .claude/aeon/evolution-history.jsonl
 ```
 aeon/
 ├── README.md                           # 本文件
-├── DESIGN.md                           # 完整架构设计文档
+├── DESIGN.md                           # 完整架构设计文档（含两条链路）
 ├── LICENSE                             # MIT 许可证
 │
 ├── skills/
 │   └── evolve.md                       # /evolve skill 定义（Claude Code 可直接使用）
 │
 ├── agents/
-│   ├── evolver.md                      # Evolver Agent — 核心进化引擎
-│   ├── observer.md                     # Observer Agent — 对话信号提取
-│   └── fitness-evaluator.md           # Fitness Evaluator — 质量守门人
+│   ├── observer.md                     # Observer Agent — 对话信号提取（进化链路）
+│   ├── evolver.md                      # Evolver Agent — 核心进化引擎（进化链路）
+│   ├── fitness-evaluator.md           # Fitness Evaluator — 质量守门人（进化链路）
+│   ├── workflow-discoverer.md          # Workflow Discoverer — 重复模式发现（引导链路）
+│   ├── necessity-evaluator.md          # Necessity Evaluator — 6关必要性判断（引导链路）
+│   └── skill-bootstrapper.md           # Skill Bootstrapper — 新 skill 生成（引导链路）
 │
 ├── tools/
-│   └── evolution-engine.js            # 进化引擎 Workflow 脚本（概念参考实现）
+│   └── evolution-engine.js            # 完整双链路 Workflow 脚本（概念参考实现）
 │
 ├── hooks/
 │   └── settings.json                   # Hook 配置（自动触发进化）
@@ -120,7 +145,7 @@ aeon/
 │   └── evolution-cycle.md             # 完整进化周期示例
 │
 └── memory-templates/
-    └── evolution-memory.md            # Memory 模板（记录进化偏好）
+    └── evolution-preferences.md        # Memory 模板（记录进化偏好）
 ```
 
 ## 进化模式
@@ -132,7 +157,20 @@ aeon/
 | **major** | 高 | ❌ 需确认 | 重写指令、行为变更 |
 | **experimental** | 未知 | 🔬 A/B测试 | 新策略探索 |
 
-## 变异算子
+## 必要性判断（6 道关卡）
+
+引导链路中，每个候选模式必须通过全部 6 关才会被创建为 skill。**任何一关失败，走更简单的替代路径。**
+
+| 关卡 | 问题 | 失败路径 |
+|------|------|---------|
+| **G1 频率** | 最近50次对话出现 ≥3 次？ | 🗑️ 不处理 |
+| **G2 稳定性** | 步骤序列已收敛？ | 📝 memory + "evolving" |
+| **G3 边界** | 触发/输入/输出清晰？ | 📝 memory |
+| **G4 重叠** | 现有 skill 不覆盖？ | 🔧 进化现有 skill |
+| **G5 复杂度** | ≥2/4 复杂度指标？ | 📝 memory（太简单） |
+| **G6 路由** | 不造成触发冲突？ | ⚠️ 重新设计或放弃 |
+
+## 变异算子（进化链路）
 
 | 算子 | 描述 | 风险 |
 |------|------|------|
@@ -158,6 +196,9 @@ aeon/
 
 ### 观察优于假设
 所有进化基于真实对话数据。AEON 不会凭空猜测应该如何改进——它从你的使用模式中学习。
+
+### 如无必要，勿增实体
+新建 skill 是最后选择。Memory 优先，进化次之，新建最末。6 道关卡确保每个新建的 skill 都是必要且经过验证的。
 
 ### 渐进优于激进
 小步快跑。每次只改一个维度，每个进化都可以独立回滚。没有"大爆炸"式的重写。
