@@ -70,7 +70,7 @@ AEON 有两条互补链路：
 git clone https://github.com/L-ingqin12/aeon.git
 
 # 将 skill 添加到你的项目
-cp aeon/skills/evolve.md .claude/skills/evolve.md
+cp -r aeon/skills/evolve .claude/skills/evolve
 
 # 将 agent 定义添加到你的项目
 cp -r aeon/agents/ .claude/agents/aeon/
@@ -144,7 +144,7 @@ aeon/
 ├── LICENSE                             # MIT 许可证
 │
 ├── skills/
-│   └── evolve.md                       # /evolve skill 定义（Claude Code 可直接使用）
+│   └── evolve/SKILL.md                 # /evolve skill 定义（子目录格式）（Claude Code 可直接使用）
 │
 ├── agents/
 │   ├── observer.md                     # Observer Agent — 对话信号提取（进化链路）
