@@ -5,18 +5,17 @@ $ErrorActionPreference = "Stop"
 Write-Host "🧬 AEON — Agent Evolution & Optimization Network" -ForegroundColor Cyan
 Write-Host "   Installing to OpenCode global environment (Windows)..." -ForegroundColor Gray
 
-# === Path Resolution (matches OpenCode's actual lookup order) ===
-# Priority: OPENCODE_CONFIG_DIR > XDG_CONFIG_HOME > ~/.config/opencode
+# === Path Resolution (matches OpenCode source: packages/opencode/src/global/index.ts) ===
+# Priority: OPENCODE_CONFIG_DIR > XDG_CONFIG_HOME/opencode > ~/.config/opencode
+# Ref: https://github.com/anomalyco/opencode (XDG-compliant, xdg-basedir npm package)
 if ($env:OPENCODE_CONFIG_DIR) {
     $OpenCodeRoot = $env:OPENCODE_CONFIG_DIR
-    Write-Host "   Using OPENCODE_CONFIG_DIR: $OpenCodeRoot" -ForegroundColor DarkGray
 } elseif ($env:XDG_CONFIG_HOME) {
     $OpenCodeRoot = Join-Path $env:XDG_CONFIG_HOME "opencode"
-    Write-Host "   Using XDG_CONFIG_HOME: $OpenCodeRoot" -ForegroundColor DarkGray
 } else {
     $OpenCodeRoot = Join-Path $env:USERPROFILE ".config\opencode"
-    Write-Host "   Using default: $OpenCodeRoot" -ForegroundColor DarkGray
 }
+Write-Host "   OpenCode global root: $OpenCodeRoot" -ForegroundColor DarkGray
 
 $RepoUrl = "https://github.com/L-ingqin12/aeon.git"
 $TempClone = Join-Path $env:TEMP "aeon-install"

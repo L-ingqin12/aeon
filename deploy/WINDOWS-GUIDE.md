@@ -9,12 +9,23 @@
 
 ## OpenCode Windows 全局路径
 
+> **验证来源**: OpenCode 使用 XDG 规范（[xdg-basedir](https://github.com/sindresorhus/xdg-basedir) npm 包）。
+> 源码: `packages/opencode/src/global/index.ts` → `$XDG_CONFIG_HOME/opencode`
+> 回退: `~/.config/opencode/` → Windows = `%USERPROFILE%\.config\opencode\`
+>
+> 参考 Issues: [anomalyco/opencode#6669](https://github.com/anomalyco/opencode/issues/6669), [#4170](https://github.com/anomalyco/opencode/issues/4170)
+
+路径解析优先级:
+1. `OPENCODE_CONFIG_DIR` 环境变量
+2. `XDG_CONFIG_HOME/opencode`
+3. `~/.config/opencode/`（默认）
+
 | 组件 | 路径 |
 |------|------|
 | 根目录 | `%USERPROFILE%\.config\opencode\` |
 | Agents | `%USERPROFILE%\.config\opencode\agent\` |
 | Commands | `%USERPROFILE%\.config\opencode\command\` |
-| Skills | `%USERPROFILE%\.config\opencode\skill\` |
+| Skills | `%USERPROFILE%\.config\opencode\skill\aeon-evolve\SKILL.md` |
 | 主配置 | `%USERPROFILE%\.config\opencode\opencode.json` |
 | AEON 配置 | `%USERPROFILE%\.config\opencode\aeon\config.json` |
 | AEON 存储 | `%USERPROFILE%\.config\opencode\aeon\` |
