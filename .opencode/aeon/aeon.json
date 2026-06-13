@@ -1,6 +1,85 @@
 {
   "_comment": "AEON config — independent file, NOT parsed by OpenCode schema. Read by AEON skill at startup.",
 
+  "autonomous": {
+    "enabled": true,
+    "_comment": "Fully autonomous self-evolution. AEON triggers itself, researches, evolves, validates, and learns from results.",
+
+    "trigger": {
+      "on_conversation_end": true,
+      "min_conversations_since_last": 2,
+      "min_hours_since_last": 0.5,
+      "max_auto_evolutions_per_day": 5,
+      "trigger_on_uncertainty": true
+    },
+
+    "research": {
+      "enabled": true,
+      "pre_evolution_search": true,
+      "proactive_knowledge_gap_detection": true,
+      "weekly_knowledge_update": true,
+      "max_search_results": 5,
+      "min_source_confidence": 2,
+      "auto_research_topics": [
+        "prompt engineering best practices",
+        "agent tool optimization patterns",
+        "skill design anti-patterns",
+        "AI agent self-improvement techniques"
+      ]
+    },
+
+    "cross_session": {
+      "enabled": true,
+      "_comment": "Learn across multiple sessions. Build a knowledge graph connecting patterns over time.",
+      "min_sessions_for_pattern": 3,
+      "session_lookback": 30,
+      "pattern_confidence_decay_days": 14
+    },
+
+    "self_validation": {
+      "enabled": true,
+      "min_test_conversations": 3,
+      "adversarial_check_enabled": true,
+      "ab_test_enabled": false,
+      "_ab_test_comment": "Set true to A/B test evolutions before full application. Higher confidence but slower."
+    },
+
+    "meta_evolution": {
+      "enabled": true,
+      "_comment": "AEON evolves its own config: adjusts thresholds, gates, and strategies based on results.",
+      "auto_tune_gate_thresholds": true,
+      "learn_from_rollbacks": true,
+      "optimize_trigger_frequency": true
+    },
+
+    "interactive": {
+      "enabled": true,
+      "_comment": "When uncertain, ask user. When confident, act autonomously.",
+      "ask_on_high_risk": true,
+      "ask_on_ambiguous_choice": true,
+      "auto_on_clear_technical": true,
+      "max_questions_per_session": 3
+    },
+
+    "parallelism": {
+      "_comment": "Fan-out subagents for maximum throughput. Each phase spawns multiple agents concurrently.",
+      "enabled": true,
+      "research": { "concurrency": 3, "_comment": "3 researchers search different topics in parallel" },
+      "observer": { "concurrency": 2, "_comment": "2 observers scan signals + cross-session patterns" },
+      "evolver": { "concurrency": 3, "_comment": "3 evolvers generate different mutation candidates" },
+      "validator": { "concurrency": 2, "_comment": "2 validators: regression + adversarial" },
+      "discoverer": { "concurrency": 2, "_comment": "2 discoverers search different pattern types" },
+      "max_total_concurrent": 6
+    },
+
+    "docs": {
+      "enabled": true,
+      "auto_generate_summaries": true,
+      "auto_generate_knowledge_graph": true,
+      "max_docs_per_day": 10
+    }
+  },
+
   "auto_evolution": {
     "enabled": true,
     "mode": "incremental",
@@ -42,6 +121,9 @@
     "evolution_history": "evolution-history.jsonl",
     "pending_review": "pending-review.md",
     "genomes": "genomes/",
-    "rejected_log": "rejected.jsonl"
+    "rejected_log": "rejected.jsonl",
+    "docs": "docs/",
+    "research": "docs/research/",
+    "references": "docs/references/"
   }
 }

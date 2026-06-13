@@ -55,6 +55,9 @@ $AeonConfigDest = Join-Path $OpenCodeRoot "aeon"
 $ScriptDest = Join-Path $OpenCodeRoot "scripts"
 New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "genomes") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "memory") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "docs\research") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "docs\references") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "docs\evolution-log") | Out-Null
 New-Item -ItemType Directory -Force -Path $ScriptDest | Out-Null
 Copy-Item (Join-Path $TempClone ".opencode\aeon\aeon.json") -Destination $AeonConfigDest -Force
 
