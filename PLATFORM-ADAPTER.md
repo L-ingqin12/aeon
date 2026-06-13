@@ -23,7 +23,7 @@ AEON 的架构设计是平台无关的。本文档说明如何将 AEON 适配到
 | **触发机制** | Hooks (settings.json) | Commands (.opencode/command/) + Plugins |
 | **Memory** | `memory/*.md` 文件持久化 | Context cache + `AGENTS.md` |
 | **Workflow** | Workflow tool (JS script) | 无原生支持 → 用 sequential delegate_task |
-| **配置** | settings.json (.claude/) | opencode.json (.opencode/) |
+| **配置** | settings.json (.claude/) | opencode.json (仅标准字段) + .opencode/aeon/config.json (AEON 独立配置) |
 
 ---
 
@@ -162,10 +162,13 @@ cp /tmp/aeon-install/.opencode/command/evolve.md .opencode/command/
 # 4. 复制 skill
 cp -r /tmp/aeon-install/.opencode/skill/aeon-evolve .opencode/skill/
 
-# 5. 合并 opencode.json 配置
-# 将 /tmp/aeon-install/opencode.json 中的 aeon 配置块合并到你的 opencode.json
+# 5. 复制 AEON 独立配置（⚠️ 不要合并到 opencode.json！自定义键会导致 OpenCode schema 校验失败）
+cp /tmp/aeon-install/.opencode/aeon/config.json .opencode/aeon/config.json
 
-# 6. 初始化 AEON 存储
+# 6. 如果你还没有 opencode.json，复制模板：
+cp /tmp/aeon-install/opencode.json .opencode/opencode.json
+
+# 7. 初始化 AEON 存储
 mkdir -p .opencode/aeon/{genomes,memory}
 echo '[]' > .opencode/aeon/evolution-history.jsonl
 

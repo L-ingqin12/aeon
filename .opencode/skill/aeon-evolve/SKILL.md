@@ -54,25 +54,26 @@ version: 1.0.0
 
 ## 配置
 
-在 `opencode.json` 中配置 AEON：
+**⚠️ AEON 配置独立于 `opencode.json`**，存放在 `.opencode/aeon/config.json`。
+不要将 `aeon` 键放入 `opencode.json` — OpenCode schema 不识别自定义字段，会导致模型/agent/skill 全部加载失败。
+
+示例 `.opencode/aeon/config.json`：
 
 ```json
 {
-  "aeon": {
-    "auto_evolution": {
-      "enabled": true,
-      "mode": "incremental",
-      "auto_apply": ["prompt_clarify", "example_add", "knowledge_update"],
-      "require_review": ["tool_add", "tool_remove", "strategy_inject", "constraint_add"]
-    },
-    "fitness": {
-      "auto_apply_threshold": 0.85,
-      "review_threshold": 0.7
-    },
-    "limits": {
-      "max_evolutions_per_day": 5,
-      "conversation_lookback": 50
-    }
+  "auto_evolution": {
+    "enabled": true,
+    "mode": "incremental",
+    "auto_apply": ["prompt_clarify", "example_add", "knowledge_update"],
+    "require_review": ["tool_add", "tool_remove", "strategy_inject", "constraint_add"]
+  },
+  "fitness": {
+    "auto_apply_threshold": 0.85,
+    "review_threshold": 0.7
+  },
+  "limits": {
+    "max_evolutions_per_day": 5,
+    "conversation_lookback": 50
   }
 }
 ```

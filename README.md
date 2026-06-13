@@ -94,7 +94,8 @@ cp /tmp/aeon-install/.opencode/command/evolve.md .opencode/command/
 # 复制 skill（自动被发现和注入）
 cp -r /tmp/aeon-install/.opencode/skill/aeon-evolve .opencode/skill/
 
-# 合并 opencode.json 中的 aeon 配置块到你的 opencode.json
+# 复制 AEON 独立配置（⚠️ 不要合并到 opencode.json）
+cp /tmp/aeon-install/.opencode/aeon/config.json .opencode/aeon/config.json
 # 初始化 AEON 存储
 mkdir -p .opencode/aeon/{genomes,memory}
 echo '[]' > .opencode/aeon/evolution-history.jsonl
