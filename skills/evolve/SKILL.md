@@ -84,6 +84,24 @@ Claude Code 通过 Stop hook 实现自动触发（已配置在 settings.local.js
    📝 Memory: N
 ```
 
+## Git 审计 ⭐
+
+AEON 的所有操作通过 git 实现完整审计：
+
+- **每个进化一个 commit** — 格式: `aeon(evolve): <entity> — <change>`
+- **分支隔离** — 在 `aeon/evolve-*` 分支上进化，验证通过后 merge
+- **回滚 = git revert** — 不用自定义逻辑
+- **Commit message 含元数据** — entity, mutation, fitness score, agent, reason, source conversations
+- **evolution-history.jsonl** — 补充记录非文件操作（信号分析、研究结果等）
+
+```
+git log --oneline --grep="aeon"
+a1b2c3d aeon(evolve): code-review — add Security + Performance dimensions
+e4f5g6h aeon(bootstrap): new skill log-analyzer
+i7j8k9l aeon(evolve): plan-agent — inject architecture-diagram-first strategy
+REVERT  aeon(rollback): code-review — revert a1b2c3d (fitness regression 0.15)
+```
+
 ## 配置
 
 在 `~/.claude/settings.local.json` 中：

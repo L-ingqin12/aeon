@@ -131,15 +131,55 @@ observation_report:
 - 涉及核心行为模式的变更
 - 影响多个 Skill/Agent 的连锁变更
 
+## Git 审计机制 ⭐
+
+**每次文件修改必须通过 git commit 记录。** AEON 的审计链 = git log。
+
+### 分支策略
+
+```
+main
+  │
+  ├─ aeon/evolve-code-review-v2.4.0  (进化分支)
+  │   ├─ commit: "aeon(evolve): code-review +Security +Performance"
+  │   └─ 验证通过 → merge to main
+  │
+  ├─ aeon/bootstrap-log-analyzer     (引导分支)
+  │   ├─ commit: "aeon(bootstrap): new skill log-analyzer"
+  │   └─ 验证通过 → merge to main
+  │
+  └─ aeon/rollback-code-review-v2.3.0 (回滚分支)
+      └─ git revert <bad-commit>
+```
+
+### Commit 格式
+
+```
+aeon(<action>): <entity> — <change-summary>
+
+Entity: code-review (skill)
+Mutation: prompt_clarify
+Fitness: 0.91
+Agent: aeon-evolver
+Reason: 用户3次指出遗漏安全检查+性能分析
+Source: conv-003, conv-007, conv-011
+
+Co-Authored-By: AEON <aeon@local>
+```
+
+### 回滚 = git revert
+
+不再使用自定义回滚逻辑。回滚就是 `git revert <commit>`。
+
 ## 执行原则
 
 1. **一次只改一个维度** — 不要在一次进化中同时改 prompt 和 tool_set
 2. **保持语义化版本** — MAJOR（行为改变）.MINOR（功能增强）.PATCH（修复/措辞）
-3. **总是保留回滚路径** — 每个进化必须可以独立回滚
-4. **记录决策理由** — 每次变更都要有清晰的 why
+3. **每个进化一个 commit** — 通过 git 保留完整回滚路径
+4. **记录决策理由** — 每次变更都要有清晰的 why（写入 commit message）
 5. **尊重用户偏好** — 如果用户之前拒绝过类似变更，降低此类变更的优先级
 6. **do-no-harm** — 如果适应度评估不确定（confidence < 0.6），偏向于不应用变更
-7. **脚本优先** — 如果进化目标中存在可用脚本替代的确定性步骤，优先建议生成脚本而非扩充 skill 指令
+7. **脚本优先** — 如果进化目标中存在可用脚本替代的确定性步骤，优先建议生成脚本
 
 ## 工具使用
 
