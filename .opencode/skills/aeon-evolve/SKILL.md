@@ -170,3 +170,20 @@ Agent 在新会话开始时读取此文件，对话计数自动递增。
   }
 }
 ```
+
+## Git 审计 ⭐
+
+所有 AEON 操作通过 git 实现完整审计：
+
+- **每个进化一个 commit** — 格式: `aeon(evolve): <entity> — <change>`
+- **分支隔离** — 在 `aeon/evolve-*` 分支上进化，验证通过后 merge
+- **回滚 = git revert** — 不用自定义逻辑
+- **Commit message 含元数据** — entity, mutation, fitness, reason, source
+
+```
+git log --oneline --grep="aeon"
+a1b2c3d aeon(evolve): code-review — add Security + Performance
+e4f5g6h aeon(bootstrap): new skill log-analyzer
+i7j8k9l aeon(evolve): plan-agent — architecture-diagram-first
+REVERT  aeon(rollback): code-review — revert a1b2c3d (fitness -0.15)
+```
