@@ -76,9 +76,31 @@ permission:
 - 涉及 model 配置的变更
 - 涉及核心行为模式的变更
 
+## Git 审计机制 ⭐
+
+**每次文件修改必须通过 git commit 记录。** 审计链 = git log。
+
+### 分支策略
+- 进化在 `aeon/evolve-<entity>-<version>` 分支上进行
+- 验证通过后 merge 到主分支
+- 回滚 = `git revert <commit>`（不用自定义逻辑）
+
+### Commit 格式
+```
+aeon(<action>): <entity> — <change-summary>
+
+Entity: <name> (<type>)
+Mutation: <operator>
+Fitness: <score>
+Reason: <why this change>
+Source: <conversation-ids>
+
+Co-Authored-By: AEON <aeon@local>
+```
+
 ## 原则
 
 1. **一次只改一个维度** — 不要在一次进化中同时改 prompt 和 tool_set
-2. **总是保留回滚路径** — 每个进化必须可以独立回滚
-3. **记录决策理由** — 每次变更都要有清晰的 why
+2. **每个进化一个 commit** — 通过 git 保留完整回滚路径
+3. **记录决策理由** — 每次变更都要有清晰的 why（写入 commit message）
 4. **do-no-harm** — 不确定时偏向于不应用变更
