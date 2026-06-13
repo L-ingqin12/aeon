@@ -39,7 +39,7 @@ AEON 的架构设计是平台无关的。本文档说明如何将 AEON 适配到
 ├── aeon-evolver.md               # 进化版本生成
 ├── aeon-fitness-evaluator.md     # 质量验证
 ├── aeon-workflow-discoverer.md   # 重复模式发现
-├── aeon-necessity-evaluator.md   # 6关必要性判断
+├── aeon-necessity-evaluator.md   # 7关必要性判断
 └── aeon-skill-bootstrapper.md    # 新 skill 生成
 ```
 
@@ -94,7 +94,7 @@ oh-my-openagent Primary Agent (Sisyphus/Prometheus/...)
         │
         ├─→ delegate_task → aeon-workflow-discoverer (发现新模式)
         │        │
-        │        └─→ delegate_task → aeon-necessity-evaluator × N (6关判断)
+        │        └─→ delegate_task → aeon-necessity-evaluator × N (7关判断)
         │                │
         │                └─→ delegate_task → aeon-skill-bootstrapper (通过者)
         │

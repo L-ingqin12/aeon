@@ -27,14 +27,15 @@ version: 1.0.0
 
 ### 引导链路 (Bootstrap)
 1. 调用 `aeon-workflow-discoverer` 发现重复工作流
-2. 调用 `aeon-necessity-evaluator` 进行 6 关必要性判断
-3. 通过全部 6 关 → 调用 `aeon-skill-bootstrapper` 生成新 skill
-4. 未通过 → 走替代路径（AGENTS.md 条目 / 进化现有 agent / 不处理）
+2. 调用 `aeon-necessity-evaluator` 进行 7 关必要性判断
+3. 通过全部 7 关 → 调用 `aeon-skill-bootstrapper` 生成新 skill/脚本
+4. 未通过 → 走替代路径（脚本 / AGENTS.md / 进化现有 agent / 不处理）
 
-## 必要性判断的 6 道关卡
+## 必要性判断的 7 道关卡
 
 | 关卡 | 问题 | 失败路径 |
 |------|------|---------|
+| **G0 脚本优先** ⭐ | 封闭世界（已知路径+结果，异常可枚举）？ | 🔧 生成脚本 + 薄 wrapper |
 | G1 频率 | 最近50次对话出现 ≥3 次？ | 🗑️ 不处理 |
 | G2 稳定性 | 步骤序列已收敛？ | 📝 记录 + "evolving" |
 | G3 边界 | 触发/输入/输出清晰？ | 📝 AGENTS.md 条目 |
@@ -44,13 +45,13 @@ version: 1.0.0
 
 ## Subagents
 
-本 skill 协调以下 subagents（均在 `.opencode/agent/aeon-*.md`）:
+本 skill 协调以下 subagents（全局 `~/.config/opencode/agent/aeon-*.md` 或项目 `.opencode/agent/aeon-*.md`）:
 - `aeon-observer` — 对话信号提取
 - `aeon-evolver` — 进化版本生成
 - `aeon-fitness-evaluator` — 质量验证
 - `aeon-workflow-discoverer` — 重复模式发现
-- `aeon-necessity-evaluator` — 6关必要性判断
-- `aeon-skill-bootstrapper` — 新 skill 生成
+- `aeon-necessity-evaluator` — 7关必要性判断
+- `aeon-skill-bootstrapper` — script/skill 双模式生成
 
 ## 配置
 

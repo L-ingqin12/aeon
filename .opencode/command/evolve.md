@@ -39,10 +39,10 @@ mode: all
 调用 `aeon-workflow-discoverer` subagent 发现重复工作流模式。
 
 ### Phase 6: Evaluate Necessity
-对每个发现的模式，调用 `aeon-necessity-evaluator` subagent 进行 6 关判断。
+对每个发现的模式，调用 `aeon-necessity-evaluator` subagent 进行 7 关判断。
 
 ### Phase 7: Bootstrap
-对通过 6 关的模式，调用 `aeon-skill-bootstrapper` subagent 生成新 skill。
+对通过 7 关的模式，调用 `aeon-skill-bootstrapper` subagent 生成新 skill。
 
 ### Phase 8: Report
 生成结构化进化报告，展示所有变更和建议。

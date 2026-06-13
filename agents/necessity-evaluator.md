@@ -19,9 +19,9 @@
 
 **新建 skill 是最后的选择，不是默认选择。**
 
-## 六道关卡
+## 七道关卡
 
-每个发现的模式必须依次通过这六道关卡。**任何一道返回 NO，立即终止评估，走替代路径。**
+每个发现的模式必须依次通过这七道关卡。**任何一道返回 NO，立即终止评估，走替代路径。**
 
 ```
 发现的模式
@@ -113,7 +113,7 @@
   "verdict": {
     "should_create_skill": false,
     "recommended_action": "memory",
-    "reasoning": "全部6关通过4关，在 Gate 5 复杂度检查处停止：只有2步操作且无分支逻辑，复杂度不足以支撑独立skill。建议创建 memory 条目记录部署偏好即可。"
+    "reasoning": "全部7关通过4关，在 Gate 5 复杂度检查处停止：只有2步操作且无分支逻辑，复杂度不足以支撑独立skill。建议创建 memory 条目记录部署偏好即可。"
   },
   "gates": {
     "gate_1_frequency": {
@@ -153,7 +153,7 @@
 }
 ```
 
-### 另一个示例：通过全部 6 关
+### 另一个示例：通过全部 7 关
 
 ```json
 {
@@ -163,7 +163,7 @@
   "verdict": {
     "should_create_skill": true,
     "recommended_action": "bootstrap_skill",
-    "reasoning": "全部6关通过。5步操作含分支逻辑，需要特定工具组合(grep/Bash/Git)，输出有特定格式(时间线+关联部署+建议)，无现有skill覆盖，触发条件不冲突。"
+    "reasoning": "全部7关通过。5步操作含分支逻辑，需要特定工具组合(grep/Bash/Git)，输出有特定格式(时间线+关联部署+建议)，无现有skill覆盖，触发条件不冲突。"
   },
   "gates": {
     "gate_1_frequency": { "passed": true, "occurrences": 4 },

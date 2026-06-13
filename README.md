@@ -39,7 +39,7 @@ AEON：观察 → 分析 → 进化 → 验证 → 部署    (Evolve 链路)
 | 用户3次指出遗漏了安全检查 | 手动修改 skill 指令 | 🔧 Evolve: 自动添加 Security 维度 |
 | Agent 发现"先画图再列步骤"100%成功 | 策略丢失在对话记录中 | 🔧 Evolve: 策略注入 Agent prompt |
 | 用户偏好的框架从 Jest 变为 Vitest | Memory 中的旧信息一直留着 | 🔧 Evolve: 自动更新 memory |
-| 用户反复手动做 部署→检查→通知 | 每次重新描述流程 | 🌱 Bootstrap: 6关通过后自动创建 deploy skill |
+| 用户反复手动做 部署→检查→通知 | 每次重新描述流程 | 🌱 Bootstrap: 7关通过后自动创建 deploy skill |
 | 用户3次手动排查日志同一套流程 | 没有意识到可以固化 | 🌱 Bootstrap: 发现模式→判断必要性→创建 log-analyzer skill |
 | 一个简单偏好（"用yarn不用npm"）被误建为skill | 过度工程化 | ⚖️ Necessity Evaluator: Gate 5 拒绝→改为 memory |
 
@@ -55,7 +55,7 @@ AEON 有两条互补链路：
 │  👁️Observer → 🔍Analyzer → 🧬Evolver → 🛡️Fitness → 🚀Deploy   │
 │                                                          │
 │  🌱 引导链路 (Bootstrap) — 增量生长                        │
-│  🔎Discoverer → ⚖️Necessity(6关) → 🏭Bootstrapper        │
+│  🔎Discoverer → ⚖️Necessity(7关) → 🏭Bootstrapper        │
 │                                                          │
 │  ⚖️ Necessity Evaluator 是守门人                          │
 │  "如无必要，勿增实体" — 默认答案是 NO                       │
@@ -127,7 +127,7 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\aeon\deploy\install-opencode-
 
 **引导链路 (Bootstrap)**:
 6. 发现的重复工作流模式
-7. 6 关必要性判断结果
+7. 7 关必要性判断结果
 8. 通过验证的新 skill 定义
 9. 降级为 memory 的简单模式
 
@@ -159,7 +159,7 @@ aeon/
 │   ├── evolver.md                      # Evolver Agent — 核心进化引擎（进化链路）
 │   ├── fitness-evaluator.md           # Fitness Evaluator — 质量守门人（进化链路）
 │   ├── workflow-discoverer.md          # Workflow Discoverer — 重复模式发现（引导链路）
-│   ├── necessity-evaluator.md          # Necessity Evaluator — 6关必要性判断（引导链路）
+│   ├── necessity-evaluator.md          # Necessity Evaluator — 7关必要性判断（引导链路）
 │   └── skill-bootstrapper.md           # Skill Bootstrapper — 新 skill 生成（引导链路）
 │
 ├── tools/
