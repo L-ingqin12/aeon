@@ -1,18 +1,32 @@
 ---
 name: evolve
-description: Analyze conversation history and evolve agents/skills. Use when the user wants to optimize agents, review pending evolutions, run "/evolve", or asks about agent evolution.
+description: AEON autonomous agent evolution. PROACTIVELY suggest /evolve at session start when (a) last evolution >2 conversations ago, (b) user corrected agent multiple times, or (c) new repeated patterns detected. Check ~/.claude/aeon/last-check.json for trigger status. Use to optimize agents, create skills from patterns, research knowledge, review evolutions, or run "/evolve".
 ---
 
 # AEON — Agent Evolution & Optimization Network
 
 让 Claude Code 的 Skills 和 Agents 从对话中学习并自我进化。
 
-## 两大能力
+## 三大能力
 
 | 能力 | 方向 | 描述 |
 |------|------|------|
+| 🔬 **研究 (Research)** | 外部知识注入 | 搜索网络，收集 prompt/tool 最佳实践 |
 | 🔧 **进化 (Evolve)** | 存量改进 | 优化已有的 skills/agents/memories |
 | 🌱 **引导 (Bootstrap)** | 增量生长 | 从对话中发现新 skill 机会 |
+
+## 自主模式 ⭐
+
+Claude Code 通过 Stop hook 实现自动触发（已配置在 settings.local.json 中）。每次对话结束后自动运行增量进化。
+
+自主能力：
+- **自动触发** — Stop hook 在对话结束时触发
+- **跨会话学习** — 分析多个会话间的模式
+- **自验证** — 进化后自动回放历史对话验证
+- **知识缺口检测** — 发现不足时主动搜索或提问
+- **Fan-out 并行** — 多 subagent 并行执行（通过 Workflow pipeline/parallel）
+- **交互提问** — 不确定时问用户（最多 3 问/会话）
+- **元进化** — 从回滚和拒绝中学习，自动调整阈值
 
 ## 核心原则
 

@@ -14,9 +14,10 @@ AEON 是一个**元级 Agent 系统**。它不直接解决用户问题，而是*
 
 ## 解决什么问题？
 
-AEON 回答两个问题：
-1. **进化**: "这个已有的 skill 可以更好吗？" → **存量改进**
-2. **引导**: "该有一个新 skill 来做这件事吗？" → **增量生长**
+AEON 回答三个问题：
+1. **研究**: "外部有哪些更好的方法？" → **知识注入**
+2. **进化**: "这个已有的 skill 可以更好吗？" → **存量改进**
+3. **引导**: "该有一个新 skill 来做这件事吗？" → **增量生长**
 
 ```
 问题：Skills 和 Agents 写好后是静态的，不会从使用中改进
@@ -24,8 +25,9 @@ AEON 回答两个问题：
 现象：用户反复纠正同一个问题、Agent 重复犯错、好的策略没有被固化
       反复执行相同流程、但每次都要从头描述
      ↓
-AEON：观察 → 分析 → 进化 → 验证 → 部署    (Evolve 链路)
+AEON：研究 → 观察 → 进化 → 验证 → 部署    (Evolve 链路)
       发现 → 必要性判断 → 引导创建 skill   (Bootstrap 链路)
+      自动触发 · 跨会话学习 · Fan-out 并行   (Autonomous)
 ```
 
 ### 核心原则
@@ -53,11 +55,10 @@ AEON 有两条互补链路：
 ┌──────────────────────────────────────────────────────────┐
 │                      AEON System                         │
 │                                                          │
-│  🔧 进化链路 (Evolve) — 存量优化                          │
+│  🔬 Research →  🔧 Evolve →  🌱 Bootstrap                 │
 │  👁️Observer → 🔍Analyzer → 🧬Evolver → 🛡️Fitness → 🚀Deploy   │
-│                                                          │
-│  🌱 引导链路 (Bootstrap) — 增量生长                        │
-│  🔎Discoverer → ⚖️Necessity(6关) → 🏭Bootstrapper        │
+│  🔎Discoverer → ⚖️Necessity(7关) → 🏭Bootstrapper        │
+│  ⚡ Autonomous: 自动触发 · 跨会话 · Fan-out 并行            │
 │                                                          │
 │  ⚖️ Necessity Evaluator 是守门人                          │
 │  "如无必要，勿增实体" — 默认答案是 NO                       │
