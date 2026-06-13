@@ -1,0 +1,9 @@
+{
+  "_comment": "AEON auto-trigger state. Updated by /evolve, checked by primary agent at session start.",
+  "last_evolution_at": null,
+  "total_evolutions": 0,
+  "conversations_since_last": 0,
+  "trigger_on_count": 2,
+  "auto_trigger_enabled": true,
+  "next_suggested_action": "Run /evolve to perform first evolution analysis"
+}

@@ -122,6 +122,7 @@
     "pending_review": "pending-review.md",
     "genomes": "genomes/",
     "rejected_log": "rejected.jsonl",
+    "last_check": "last-check.json",
     "docs": "docs/",
     "research": "docs/research/",
     "references": "docs/references/"

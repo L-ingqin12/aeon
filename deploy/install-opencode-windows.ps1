@@ -65,6 +65,10 @@ $HistoryFile = Join-Path $AeonConfigDest "evolution-history.jsonl"
 if (-not (Test-Path $HistoryFile)) {
     "[]" | Out-File -FilePath $HistoryFile -Encoding utf8
 }
+$CheckFile = Join-Path $AeonConfigDest "last-check.json"
+if (-not (Test-Path $CheckFile)) {
+    Copy-Item (Join-Path $TempClone ".opencode\aeon\last-check.json") -Destination $AeonConfigDest -Force
+}
 Write-Host "       Config → $AeonConfigDest\aeon.json"
 
 # === Step 6: opencode.json (only standard fields, no custom keys) ===

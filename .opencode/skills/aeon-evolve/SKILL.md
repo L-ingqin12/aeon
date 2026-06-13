@@ -1,6 +1,6 @@
 ---
 name: aeon-evolve
-description: AEON agent evolution system — analyze conversation history and automatically evolve agents, skills, and workflows. Also discovers new skill opportunities from repeated conversation patterns. Use when the user wants to optimize agents, create skills from conversation patterns, review pending evolutions, or run "/evolve".
+description: AEON autonomous agent evolution system. PROACTIVELY suggest running /evolve at session start if (a) last evolution was >2 conversations ago, (b) user has corrected the agent multiple times, or (c) new repeated patterns are detected. Check ~/.config/opencode/aeon/last-check.json for trigger status. Use to optimize agents, create skills from patterns, review evolutions, or run "/evolve".
 version: 1.0.0
 ---
 
@@ -9,6 +9,53 @@ version: 1.0.0
 > **让 Agents 和 Skills 从对话中学习并自我进化。**
 >
 > "如无必要，勿增实体" — 新建 skill 是最后选择。
+
+## 自动触发机制 ⭐
+
+**OpenCode 无原生 session hook**，AEON 通过以下方式实现自动触发：
+
+### 方式 1: Skill 主动建议（零配置，推荐）
+
+本 skill 的 description 已包含触发条件。Primary agent 在每次会话**启动时**应：
+
+1. 检查 `~/.config/opencode/aeon/last-check.json` 中的 `last_evolution_at` 时间戳
+2. 如果距离上次进化已超过 2 次对话 → **主动建议用户运行 `/evolve`**
+3. 如果用户在同一会话中多次纠正 agent → **主动建议运行 `/evolve`**
+
+```
+会话开始 → agent 读取 SKILL.md → 检查 last-check.json → 建议 /evolve
+```
+
+### 方式 2: 外部调度器（完全自动）
+
+**Windows Task Scheduler**:
+```powershell
+# 创建每天自动运行 /evolve 的任务
+$Action = New-ScheduledTaskAction -Execute "opencode" -Argument "--non-interactive /evolve"
+$Trigger = New-ScheduledTaskTrigger -Daily -At "09:00"
+Register-ScheduledTask -TaskName "AEON Auto Evolve" -Action $Action -Trigger $Trigger
+```
+
+**Linux cron**:
+```bash
+# 每天 9:00 自动运行
+0 9 * * * opencode --non-interactive "/evolve" >> ~/.config/opencode/aeon/cron.log 2>&1
+```
+
+### 方式 3: 对话计数触发
+
+每次 `/evolve` 运行时更新 `last-check.json`：
+
+```json
+{
+  "last_evolution_at": "2026-06-12T09:00:00Z",
+  "conversations_since_last": 0,
+  "trigger_on_conversation_count": 2,
+  "next_check_at": "after 2 more conversations"
+}
+```
+
+Agent 在新会话开始时读取此文件，对话计数自动递增。
 
 ## 三大能力
 

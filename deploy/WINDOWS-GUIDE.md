@@ -104,7 +104,29 @@ AEON 配置独立存放在 `%USERPROFILE%\.config\opencode\aeon\aeon.json`。
 
 1. 重启 OpenCode 桌面版
 2. 输入 `/evolve` → 应看到 AEON 进化循环启动
-3. 检查 agent 列表 → 应包含 `aeon-observer`, `aeon-evolver` 等
+3. 检查 agent 列表 → 应包含 7 个 `aeon-*` agents
+
+## 自动触发设置
+
+OpenCode 没有原生 session hook。三种方式实现自动触发：
+
+### 方式 1: Skill 主动建议（已内置）
+
+AEON 的 SKILL.md description 已包含触发指令。Primary agent 在新会话开始时**自动检查** `last-check.json`，满足条件时主动建议运行 `/evolve`。
+
+**无需额外配置。**
+
+### 方式 2: Windows Task Scheduler（完全自动）
+
+```powershell
+$Action = New-ScheduledTaskAction -Execute "opencode" -Argument "/evolve"
+$Trigger = New-ScheduledTaskTrigger -Daily -At "09:00"
+Register-ScheduledTask -TaskName "AEON Auto Evolve" -Action $Action -Trigger $Trigger
+```
+
+### 方式 3: 对话计数
+
+每次 `/evolve` 运行后更新 `%USERPROFILE%\.config\opencode\aeon\last-check.json`。Agent 在新会话时读取，对话数达到阈值时建议进化。
 
 ## 卸载
 
