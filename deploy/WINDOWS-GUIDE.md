@@ -11,13 +11,13 @@
 
 | 组件 | 路径 |
 |------|------|
-| 根目录 | `%USERPROFILE%\.opencode\` |
-| Agents | `%USERPROFILE%\.opencode\agent\` |
-| Commands | `%USERPROFILE%\.opencode\command\` |
-| Skills | `%USERPROFILE%\.opencode\skill\` |
-| 主配置 | `%USERPROFILE%\.opencode\opencode.json` |
-| AEON 配置 | `%USERPROFILE%\.opencode\aeon\config.json` |
-| AEON 存储 | `%USERPROFILE%\.opencode\aeon\` |
+| 根目录 | `%USERPROFILE%\.config\opencode\` |
+| Agents | `%USERPROFILE%\.config\opencode\agent\` |
+| Commands | `%USERPROFILE%\.config\opencode\command\` |
+| Skills | `%USERPROFILE%\.config\opencode\skill\` |
+| 主配置 | `%USERPROFILE%\.config\opencode\opencode.json` |
+| AEON 配置 | `%USERPROFILE%\.config\opencode\aeon\config.json` |
+| AEON 存储 | `%USERPROFILE%\.config\opencode\aeon\` |
 
 ## 一键安装
 
@@ -78,13 +78,13 @@ if (-not (Test-Path $env:USERPROFILE\.opencode\opencode.json)) {
 - 会话无法创建
 - Skills 不显示
 
-AEON 配置独立存放在 `%USERPROFILE%\.opencode\aeon\config.json`。
+AEON 配置独立存放在 `%USERPROFILE%\.config\opencode\aeon\config.json`。
 
 ### Windows 路径差异
 
 | Linux/Mac | Windows |
 |-----------|---------|
-| `~/.opencode/` | `%USERPROFILE%\.opencode\` |
+| `~/.opencode/` | `%USERPROFILE%\.config\opencode\` |
 | `/` 路径分隔符 | `\` 路径分隔符 |
 | `mkdir -p` | `mkdir -Force` |
 | `cp` | `Copy-Item` |

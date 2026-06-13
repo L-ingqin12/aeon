@@ -1,70 +1,78 @@
 # AEON Windows Deployment Script for OpenCode
-# Run in PowerShell: .\install-opencode-windows.ps1
-# Or: powershell -ExecutionPolicy Bypass -File install-opencode-windows.ps1
+# Run: powershell -ExecutionPolicy Bypass -File install-opencode-windows.ps1
 
 $ErrorActionPreference = "Stop"
 Write-Host "🧬 AEON — Agent Evolution & Optimization Network" -ForegroundColor Cyan
 Write-Host "   Installing to OpenCode global environment (Windows)..." -ForegroundColor Gray
+
+# === Path Resolution (matches OpenCode's actual lookup order) ===
+# Priority: OPENCODE_CONFIG_DIR > XDG_CONFIG_HOME > ~/.config/opencode
+if ($env:OPENCODE_CONFIG_DIR) {
+    $OpenCodeRoot = $env:OPENCODE_CONFIG_DIR
+    Write-Host "   Using OPENCODE_CONFIG_DIR: $OpenCodeRoot" -ForegroundColor DarkGray
+} elseif ($env:XDG_CONFIG_HOME) {
+    $OpenCodeRoot = Join-Path $env:XDG_CONFIG_HOME "opencode"
+    Write-Host "   Using XDG_CONFIG_HOME: $OpenCodeRoot" -ForegroundColor DarkGray
+} else {
+    $OpenCodeRoot = Join-Path $env:USERPROFILE ".config\opencode"
+    Write-Host "   Using default: $OpenCodeRoot" -ForegroundColor DarkGray
+}
+
+$RepoUrl = "https://github.com/L-ingqin12/aeon.git"
+$TempClone = Join-Path $env:TEMP "aeon-install"
 Write-Host ""
 
-# === Paths ===
-$OpenCodeRoot = "$env:USERPROFILE\.opencode"
-$RepoUrl = "https://github.com/L-ingqin12/aeon.git"
-$TempClone = "$env:TEMP\aeon-install"
-
-# === Step 1: Clone or download AEON ===
+# === Step 1: Fetch AEON ===
 Write-Host "[1/6] Fetching AEON..." -ForegroundColor Yellow
 if (Test-Path $TempClone) { Remove-Item -Recurse -Force $TempClone }
 git clone --depth 1 --branch opencode $RepoUrl $TempClone 2>&1 | Out-Null
-Write-Host "       Cloned to $TempClone"
+Write-Host "       Done"
 
 # === Step 2: Deploy agents (subagents) ===
 Write-Host "[2/6] Deploying AEON agents..." -ForegroundColor Yellow
-$AgentDest = "$OpenCodeRoot\agent"
+$AgentDest = Join-Path $OpenCodeRoot "agent"
 New-Item -ItemType Directory -Force -Path $AgentDest | Out-Null
-Copy-Item "$TempClone\.opencode\agent\aeon-*.md" -Destination $AgentDest -Force
-$agentCount = (Get-ChildItem "$AgentDest\aeon-*.md").Count
-Write-Host "       $agentCount agents deployed to $AgentDest"
+Copy-Item (Join-Path $TempClone ".opencode\agent\aeon-*.md") -Destination $AgentDest -Force
+$agentCount = (Get-ChildItem (Join-Path $AgentDest "aeon-*.md")).Count
+Write-Host "       $agentCount agents → $AgentDest"
 
 # === Step 3: Deploy command (/evolve entry) ===
 Write-Host "[3/6] Deploying /evolve command..." -ForegroundColor Yellow
-$CommandDest = "$OpenCodeRoot\command"
+$CommandDest = Join-Path $OpenCodeRoot "command"
 New-Item -ItemType Directory -Force -Path $CommandDest | Out-Null
-Copy-Item "$TempClone\.opencode\command\evolve.md" -Destination $CommandDest -Force
+Copy-Item (Join-Path $TempClone ".opencode\command\evolve.md") -Destination $CommandDest -Force
 Write-Host "       evolve.md → $CommandDest"
 
 # === Step 4: Deploy skill (auto-discovery) ===
 Write-Host "[4/6] Deploying AEON skill..." -ForegroundColor Yellow
-$SkillDest = "$OpenCodeRoot\skill\aeon-evolve"
+$SkillDest = Join-Path $OpenCodeRoot "skill\aeon-evolve"
 New-Item -ItemType Directory -Force -Path $SkillDest | Out-Null
-Copy-Item "$TempClone\.opencode\skill\aeon-evolve\*" -Destination $SkillDest -Force -Recurse
+Copy-Item (Join-Path $TempClone ".opencode\skill\aeon-evolve\*") -Destination $SkillDest -Force -Recurse
 Write-Host "       aeon-evolve → $SkillDest"
 
-# === Step 5: AEON config (independent from opencode.json!) ===
+# === Step 5: AEON config (independent file, NOT merged into opencode.json!) ===
 Write-Host "[5/6] Setting up AEON config..." -ForegroundColor Yellow
-$AeonConfigDest = "$OpenCodeRoot\aeon"
-New-Item -ItemType Directory -Force -Path "$AeonConfigDest\genomes" | Out-Null
-New-Item -ItemType Directory -Force -Path "$AeonConfigDest\memory" | Out-Null
-New-Item -ItemType Directory -Force -Path "$OpenCodeRoot\script" | Out-Null
-Copy-Item "$TempClone\.opencode\aeon\config.json" -Destination $AeonConfigDest -Force
+$AeonConfigDest = Join-Path $OpenCodeRoot "aeon"
+$ScriptDest = Join-Path $OpenCodeRoot "script"
+New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "genomes") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "memory") | Out-Null
+New-Item -ItemType Directory -Force -Path $ScriptDest | Out-Null
+Copy-Item (Join-Path $TempClone ".opencode\aeon\config.json") -Destination $AeonConfigDest -Force
 
-# Initialize history file if missing
-$HistoryFile = "$AeonConfigDest\evolution-history.jsonl"
+$HistoryFile = Join-Path $AeonConfigDest "evolution-history.jsonl"
 if (-not (Test-Path $HistoryFile)) {
     "[]" | Out-File -FilePath $HistoryFile -Encoding utf8
 }
 Write-Host "       Config → $AeonConfigDest\config.json"
-Write-Host "       Storage → $AeonConfigDest\"
 
-# === Step 6: Merge opencode.json (if user has one) ===
+# === Step 6: opencode.json (only standard fields, no custom keys) ===
 Write-Host "[6/6] Checking opencode.json..." -ForegroundColor Yellow
-$UserConfig = "$OpenCodeRoot\opencode.json"
+$UserConfig = Join-Path $OpenCodeRoot "opencode.json"
 if (Test-Path $UserConfig) {
-    Write-Host "       Existing opencode.json found — SKIPPING (do NOT manually merge 'aeon' keys!)"
-    Write-Host "       AEON config is at $AeonConfigDest\config.json (independent)"
+    Write-Host "       Existing opencode.json — SKIPPED (AEON uses independent config)"
 } else {
-    Copy-Item "$TempClone\opencode.json" -Destination $UserConfig -Force
-    Write-Host "       Created $UserConfig from template"
+    Copy-Item (Join-Path $TempClone "opencode.json") -Destination $UserConfig -Force
+    Write-Host "       Created $UserConfig"
 }
 
 # === Cleanup ===
@@ -76,14 +84,12 @@ Write-Host "══════════════════════�
 Write-Host "  ✅ AEON installed to OpenCode global environment" -ForegroundColor Green
 Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host ""
-Write-Host "Installed:" -ForegroundColor White
-Write-Host "  Agents:    $OpenCodeRoot\agent\aeon-*.md ($agentCount files)" -ForegroundColor Gray
-Write-Host "  Command:   $OpenCodeRoot\command\evolve.md" -ForegroundColor Gray
-Write-Host "  Skill:     $OpenCodeRoot\skill\aeon-evolve\" -ForegroundColor Gray
-Write-Host "  Config:    $OpenCodeRoot\aeon\config.json" -ForegroundColor Gray
+Write-Host "  Root:   $OpenCodeRoot" -ForegroundColor Gray
+Write-Host "  Agents: $AgentDest ($agentCount files)" -ForegroundColor Gray
+Write-Host "  Skill:  $SkillDest" -ForegroundColor Gray
+Write-Host "  Config: $AeonConfigDest\config.json" -ForegroundColor Gray
 Write-Host ""
-Write-Host "Next steps:" -ForegroundColor White
-Write-Host "  1. Restart OpenCode desktop app" -ForegroundColor Gray
-Write-Host "  2. Type /evolve to run the first evolution cycle" -ForegroundColor Gray
-Write-Host "  3. Review ~/.opencode/aeon/pending-review.md for pending changes" -ForegroundColor Gray
+Write-Host "Next:" -ForegroundColor White
+Write-Host "  1. Restart OpenCode desktop" -ForegroundColor Gray
+Write-Host "  2. Type /evolve" -ForegroundColor Gray
 Write-Host ""

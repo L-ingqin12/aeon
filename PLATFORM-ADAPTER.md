@@ -150,7 +150,7 @@ Claude Code 的 memory 文件系统 (`memory/*.md`) 在 OpenCode 中无直接等
 | 平台 | 全局根目录 | Agent 路径 | Skill 路径 | 配置路径 |
 |------|-----------|-----------|-----------|---------|
 | **Linux/Mac** | `~/.opencode/` | `~/.opencode/agent/` | `~/.opencode/skill/` | `~/.opencode/aeon/config.json` |
-| **Windows** | `%USERPROFILE%\\.opencode\\` | `%USERPROFILE%\\.opencode\\agent\\` | `%USERPROFILE%\\.opencode\\skill\\` | `%USERPROFILE%\\.opencode\\aeon\\config.json` |
+| **Windows** | `%USERPROFILE%\\.config\\opencode\\` | `%USERPROFILE%\\.config\\opencode\\agent\\` | `%USERPROFILE%\\.config\\opencode\\skill\\` | `%USERPROFILE%\\.config\\opencode\\aeon\\config.json` |
 
 ---
 
