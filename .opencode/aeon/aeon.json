@@ -1,5 +1,5 @@
 {
-  "_comment": "AEON config — 独立文件，不会被 OpenCode schema 解析。AEON agents/commands 在启动时读取此文件。",
+  "_comment": "AEON config — independent file, NOT parsed by OpenCode schema. Read by AEON skill at startup.",
 
   "auto_evolution": {
     "enabled": true,

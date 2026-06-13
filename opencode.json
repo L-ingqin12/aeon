@@ -4,7 +4,7 @@
   "autoupdate": true,
   "skills": {
     "paths": [
-      ".opencode/skill",
+      ".opencode/skills",
       ".claude/skills"
     ]
   }

@@ -27,7 +27,7 @@ permission:
 
 ### 1. 可执行脚本
 
-放在 `.opencode/script/` 或 `.claude/scripts/` 中：
+放在 `.opencode/scripts/` 或 `.claude/scripts/` 中：
 
 ```bash
 #!/usr/bin/env bash
@@ -77,7 +77,7 @@ Runs deterministic pre-deploy checks via script.
 ## How to use
 Run the script first, then analyze the output:
 ```bash
-.opencode/script/check-deploy-readiness.sh
+.opencode/scripts/check-deploy-readiness.sh
 ```
 
 ## Interpreting results
@@ -125,8 +125,8 @@ The script handles all deterministic checks. Your ONLY job is:
 
 | 模式 | 产出文件 |
 |------|---------|
-| Script mode | `.opencode/script/<name>.sh` + `.opencode/skill/<name>/SKILL.md` (thin wrapper) |
-| Skill mode | `.opencode/skill/<name>/SKILL.md` (full) |
+| Script mode | `.opencode/scripts/<name>.sh` + `.opencode/skills/<name>/SKILL.md` (thin wrapper) |
+| Skill mode | `.opencode/skills/<name>/SKILL.md` (full) |
 | 兼容格式 | `.claude/skills/<name>.md` |
 
 ## 元数据
@@ -139,8 +139,8 @@ The script handles all deterministic checks. Your ONLY job is:
   "mode": "script",
   "scriptable_ratio": 0.85,
   "files_created": [
-    ".opencode/script/check-deploy-readiness.sh",
-    ".opencode/skill/check-deploy-readiness/SKILL.md"
+    ".opencode/scripts/check-deploy-readiness.sh",
+    ".opencode/skills/check-deploy-readiness/SKILL.md"
   ],
   "source_pattern": "pat-042",
   "source_conversations": ["conv-12", "conv-18", "conv-23"]

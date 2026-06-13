@@ -7,7 +7,7 @@ AEON 的架构设计是平台无关的。本文档说明如何将 AEON 适配到
 | 平台 | 适配状态 | 入口 |
 |------|---------|------|
 | **Claude Code** | ✅ 原生 | `skills/evolve.md` + `agents/*.md` |
-| **OpenCode + oh-my-openagent** | ✅ 已适配 | `.opencode/agent/` + `.opencode/command/evolve.md` |
+| **OpenCode + oh-my-openagent** | ✅ 已适配 | `.opencode/agents/` + `.opencode/commands/evolve.md` |
 
 ---
 
@@ -15,12 +15,12 @@ AEON 的架构设计是平台无关的。本文档说明如何将 AEON 适配到
 
 | 概念 | Claude Code | OpenCode |
 |------|------------|----------|
-| **Agent 定义** | 系统提示字符串 | `.opencode/agent/*.md` + YAML frontmatter |
+| **Agent 定义** | 系统提示字符串 | `.opencode/agents/*.md` + YAML frontmatter |
 | **Agent 调用方式** | `Agent` tool + `subagent_type` | Primary agent 通过 `delegate_task` 调用 subagent |
 | **Agent 权限** | 无声明式权限 | YAML frontmatter `permission:` + `tools:` |
-| **Skill 定义** | `.claude/skills/<name>.md` (flat) | `.opencode/skill/<name>/SKILL.md` (subdirectory) |
+| **Skill 定义** | `.claude/skills/<name>.md` (flat) | `.opencode/skills/<name>/SKILL.md` (subdirectory) |
 | **Skill 发现** | `Skill` tool 自动路由 | System prompt injection + `/command` |
-| **触发机制** | Hooks (settings.json) | Commands (.opencode/command/) + Plugins |
+| **触发机制** | Hooks (settings.json) | Commands (.opencode/commands/) + Plugins |
 | **Memory** | `memory/*.md` 文件持久化 | Context cache + `AGENTS.md` |
 | **Workflow** | Workflow tool (JS script) | 无原生支持 → 用 sequential delegate_task |
 | **配置** | settings.json (.claude/) | opencode.json (仅标准字段) + .opencode/aeon/aeon.json (AEON 独立配置) |
@@ -31,10 +31,10 @@ AEON 的架构设计是平台无关的。本文档说明如何将 AEON 适配到
 
 ### 文件位置
 
-每个 AEON agent 放在 `.opencode/agent/aeon-<name>.md`：
+每个 AEON agent 放在 `.opencode/agents/aeon-<name>.md`：
 
 ```
-.opencode/agent/
+.opencode/agents/
 ├── aeon-observer.md              # 对话信号提取
 ├── aeon-evolver.md               # 进化版本生成
 ├── aeon-fitness-evaluator.md     # 质量验证
@@ -75,14 +75,14 @@ permission:                 # 权限策略
 
 ## /evolve 的调用链
 
-在 OpenCode 中，`/evolve` 是一个 Command（`.opencode/command/evolve.md`）。
+在 OpenCode 中，`/evolve` 是一个 Command（`.opencode/commands/evolve.md`）。
 
 ```
 用户输入 /evolve
         │
         ▼
 oh-my-openagent Primary Agent (Sisyphus/Prometheus/...)
-  读取 .opencode/command/evolve.md
+  读取 .opencode/commands/evolve.md
   理解执行流程
         │
         ▼
@@ -126,9 +126,9 @@ Claude Code 的 memory 文件系统 (`memory/*.md`) 在 OpenCode 中无直接等
 ```
 
 ### 方案 2: Skill 资源文件
-在 `.opencode/skill/aeon-evolve/` 下维护学习到的偏好：
+在 `.opencode/skills/aeon-evolve/` 下维护学习到的偏好：
 ```
-.opencode/skill/aeon-evolve/
+.opencode/skills/aeon-evolve/
 ├── SKILL.md
 ├── learned-preferences.md
 └── evolution-history.jsonl
@@ -163,13 +163,13 @@ Claude Code 的 memory 文件系统 (`memory/*.md`) 在 OpenCode 中无直接等
 git clone https://github.com/L-ingqin12/aeon.git /tmp/aeon-install
 
 # 2. 复制 agent 定义
-cp /tmp/aeon-install/.opencode/agent/aeon-*.md .opencode/agent/
+cp /tmp/aeon-install/.opencode/agents/aeon-*.md .opencode/agents/
 
 # 3. 复制 command
-cp /tmp/aeon-install/.opencode/command/evolve.md .opencode/command/
+cp /tmp/aeon-install/.opencode/commands/evolve.md .opencode/commands/
 
 # 4. 复制 skill
-cp -r /tmp/aeon-install/.opencode/skill/aeon-evolve .opencode/skill/
+cp -r /tmp/aeon-install/.opencode/skills/aeon-evolve .opencode/skills/
 
 # 5. 复制 AEON 独立配置（⚠️ 不要合并到 opencode.json！自定义键会导致 OpenCode schema 校验失败）
 cp /tmp/aeon-install/.opencode/aeon/aeon.json .opencode/aeon/aeon.json

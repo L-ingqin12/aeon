@@ -23,9 +23,9 @@
 | 组件 | 路径 |
 |------|------|
 | 根目录 | `%USERPROFILE%\.config\opencode\` |
-| Agents | `%USERPROFILE%\.config\opencode\agent\` |
-| Commands | `%USERPROFILE%\.config\opencode\command\` |
-| Skills | `%USERPROFILE%\.config\opencode\skill\aeon-evolve\SKILL.md` |
+| Agents | `%USERPROFILE%\.config\opencode\agents\` |
+| Commands | `%USERPROFILE%\.config\opencode\commands\` |
+| Skills | `%USERPROFILE%\.config\opencode\skills\aeon-evolve\SKILL.md` |
 | 主配置 | `%USERPROFILE%\.config\opencode\opencode.json` |
 | AEON 配置 | `%USERPROFILE%\.config\opencode\aeon\aeon.json` |
 | AEON 存储 | `%USERPROFILE%\.config\opencode\aeon\` |
@@ -43,39 +43,39 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\aeon\deploy\install-opencode-
 ### Step 1: 部署 Agents
 
 ```powershell
-mkdir -Force $env:USERPROFILE\.opencode\agent
-Copy-Item aeon\.opencode\agent\aeon-*.md $env:USERPROFILE\.opencode\agent\
+mkdir -Force $env:USERPROFILE\.config\opencode\agent
+Copy-Item aeon\.opencode\agents\aeon-*.md $env:USERPROFILE\.config\opencode\agents\
 ```
 
 ### Step 2: 部署 Command
 
 ```powershell
-mkdir -Force $env:USERPROFILE\.opencode\command
-Copy-Item aeon\.opencode\command\evolve.md $env:USERPROFILE\.opencode\command\
+mkdir -Force $env:USERPROFILE\.config\opencode\command
+Copy-Item aeon\.opencode\commands\evolve.md $env:USERPROFILE\.config\opencode\commands\
 ```
 
 ### Step 3: 部署 Skill
 
 ```powershell
-Copy-Item -Recurse aeon\.opencode\skill\aeon-evolve $env:USERPROFILE\.opencode\skill\
+Copy-Item -Recurse aeon\.opencode\skills\aeon-evolve $env:USERPROFILE\.config\opencode\skill\
 ```
 
 ### Step 4: 设置 AEON 配置
 
 ```powershell
-mkdir -Force $env:USERPROFILE\.opencode\aeon\genomes
-mkdir -Force $env:USERPROFILE\.opencode\aeon\memory
-mkdir -Force $env:USERPROFILE\.opencode\script
+mkdir -Force $env:USERPROFILE\.config\opencode\aeon\genomes
+mkdir -Force $env:USERPROFILE\.config\opencode\aeon\memory
+mkdir -Force $env:USERPROFILE\.config\opencode\script
 Copy-Item aeon\.opencode\aeon\aeon.json $env:USERPROFILE\.config\opencode\aeon\
-"[]" | Out-File $env:USERPROFILE\.opencode\aeon\evolution-history.jsonl
+"[]" | Out-File $env:USERPROFILE\.config\opencode\aeon\evolution-history.jsonl
 ```
 
 ### Step 5: 检查 opencode.json
 
 ```powershell
 # 如果已有 opencode.json，不要覆盖！AEON 使用独立配置文件。
-if (-not (Test-Path $env:USERPROFILE\.opencode\opencode.json)) {
-    Copy-Item aeon\opencode.json $env:USERPROFILE\.opencode\opencode.json
+if (-not (Test-Path $env:USERPROFILE\.config\opencode\opencode.json)) {
+    Copy-Item aeon\opencode.json $env:USERPROFILE\.config\opencode\opencode.json
 }
 ```
 
@@ -109,8 +109,8 @@ AEON 配置独立存放在 `%USERPROFILE%\.config\opencode\aeon\aeon.json`。
 ## 卸载
 
 ```powershell
-Remove-Item -Recurse $env:USERPROFILE\.opencode\agent\aeon-*.md
-Remove-Item $env:USERPROFILE\.opencode\command\evolve.md
-Remove-Item -Recurse $env:USERPROFILE\.opencode\skill\aeon-evolve
-Remove-Item -Recurse $env:USERPROFILE\.opencode\aeon
+Remove-Item -Recurse $env:USERPROFILE\.config\opencode\agents\aeon-*.md
+Remove-Item $env:USERPROFILE\.config\opencode\commands\evolve.md
+Remove-Item -Recurse $env:USERPROFILE\.config\opencode\skills\aeon-evolve
+Remove-Item -Recurse $env:USERPROFILE\.config\opencode\aeon
 ```

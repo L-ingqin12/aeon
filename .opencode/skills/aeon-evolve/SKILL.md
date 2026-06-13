@@ -45,7 +45,7 @@ version: 1.0.0
 
 ## Subagents
 
-本 skill 协调以下 subagents（全局 `~/.config/opencode/agent/aeon-*.md` 或项目 `.opencode/agent/aeon-*.md`）:
+本 skill 协调以下 subagents（全局 `~/.config/opencode/agents/aeon-*.md` 或项目 `.opencode/agents/aeon-*.md`）:
 - `aeon-observer` — 对话信号提取
 - `aeon-evolver` — 进化版本生成
 - `aeon-fitness-evaluator` — 质量验证

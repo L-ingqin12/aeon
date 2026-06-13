@@ -86,13 +86,13 @@ echo '[]' > .claude/aeon/evolution-history.jsonl
 git clone https://github.com/L-ingqin12/aeon.git /tmp/aeon-install
 
 # 复制 agent 定义（注册为 subagent）
-cp /tmp/aeon-install/.opencode/agent/aeon-*.md .opencode/agent/
+cp /tmp/aeon-install/.opencode/agents/aeon-*.md .opencode/agents/
 
 # 复制 command（/evolve 入口）
-cp /tmp/aeon-install/.opencode/command/evolve.md .opencode/command/
+cp /tmp/aeon-install/.opencode/commands/evolve.md .opencode/commands/
 
 # 复制 skill（自动被发现和注入）
-cp -r /tmp/aeon-install/.opencode/skill/aeon-evolve .opencode/skill/
+cp -r /tmp/aeon-install/.opencode/skills/aeon-evolve .opencode/skills/
 
 # 复制 AEON 独立配置（⚠️ 不要合并到 opencode.json）
 cp /tmp/aeon-install/.opencode/aeon/aeon.json .opencode/aeon/aeon.json

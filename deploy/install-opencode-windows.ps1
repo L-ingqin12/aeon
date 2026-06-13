@@ -29,30 +29,30 @@ Write-Host "       Done"
 
 # === Step 2: Deploy agents (subagents) ===
 Write-Host "[2/6] Deploying AEON agents..." -ForegroundColor Yellow
-$AgentDest = Join-Path $OpenCodeRoot "agent"
+$AgentDest = Join-Path $OpenCodeRoot "agents"
 New-Item -ItemType Directory -Force -Path $AgentDest | Out-Null
-Copy-Item (Join-Path $TempClone ".opencode\agent\aeon-*.md") -Destination $AgentDest -Force
+Copy-Item (Join-Path $TempClone ".opencode\agents\aeon-*.md") -Destination $AgentDest -Force
 $agentCount = (Get-ChildItem (Join-Path $AgentDest "aeon-*.md")).Count
 Write-Host "       $agentCount agents → $AgentDest"
 
 # === Step 3: Deploy command (/evolve entry) ===
 Write-Host "[3/6] Deploying /evolve command..." -ForegroundColor Yellow
-$CommandDest = Join-Path $OpenCodeRoot "command"
+$CommandDest = Join-Path $OpenCodeRoot "commands"
 New-Item -ItemType Directory -Force -Path $CommandDest | Out-Null
-Copy-Item (Join-Path $TempClone ".opencode\command\evolve.md") -Destination $CommandDest -Force
+Copy-Item (Join-Path $TempClone ".opencode\commands\evolve.md") -Destination $CommandDest -Force
 Write-Host "       evolve.md → $CommandDest"
 
 # === Step 4: Deploy skill (auto-discovery) ===
 Write-Host "[4/6] Deploying AEON skill..." -ForegroundColor Yellow
-$SkillDest = Join-Path $OpenCodeRoot "skill\aeon-evolve"
+$SkillDest = Join-Path $OpenCodeRoot "skills\aeon-evolve"
 New-Item -ItemType Directory -Force -Path $SkillDest | Out-Null
-Copy-Item (Join-Path $TempClone ".opencode\skill\aeon-evolve\*") -Destination $SkillDest -Force -Recurse
+Copy-Item (Join-Path $TempClone ".opencode\skills\aeon-evolve\*") -Destination $SkillDest -Force -Recurse
 Write-Host "       aeon-evolve → $SkillDest"
 
 # === Step 5: AEON config (independent file, NOT merged into opencode.json!) ===
 Write-Host "[5/6] Setting up AEON config..." -ForegroundColor Yellow
 $AeonConfigDest = Join-Path $OpenCodeRoot "aeon"
-$ScriptDest = Join-Path $OpenCodeRoot "script"
+$ScriptDest = Join-Path $OpenCodeRoot "scripts"
 New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "genomes") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "memory") | Out-Null
 New-Item -ItemType Directory -Force -Path $ScriptDest | Out-Null
