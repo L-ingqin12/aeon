@@ -145,9 +145,18 @@ Claude Code 的 memory 文件系统 (`memory/*.md`) 在 OpenCode 中无直接等
 
 ---
 
+## 路径速查
+
+| 平台 | 全局根目录 | Agent 路径 | Skill 路径 | 配置路径 |
+|------|-----------|-----------|-----------|---------|
+| **Linux/Mac** | `~/.opencode/` | `~/.opencode/agent/` | `~/.opencode/skill/` | `~/.opencode/aeon/config.json` |
+| **Windows** | `%USERPROFILE%\\.opencode\\` | `%USERPROFILE%\\.opencode\\agent\\` | `%USERPROFILE%\\.opencode\\skill\\` | `%USERPROFILE%\\.opencode\\aeon\\config.json` |
+
+---
+
 ## 安装指南
 
-### 在 OpenCode 项目中安装 AEON
+### Linux/Mac
 
 ```bash
 # 1. 克隆 AEON
@@ -175,6 +184,16 @@ echo '[]' > .opencode/aeon/evolution-history.jsonl
 # 7. 重启 OpenCode
 # agent 和 skill 会在启动时自动发现
 ```
+
+### Windows
+
+```powershell
+# 一键安装
+git clone --depth 1 --branch opencode https://github.com/L-ingqin12/aeon.git $env:TEMP\aeon
+powershell -ExecutionPolicy Bypass -File $env:TEMP\aeon\deploy\install-opencode-windows.ps1
+```
+
+或手动安装，详见 [`deploy/WINDOWS-GUIDE.md`](deploy/WINDOWS-GUIDE.md)。
 
 ### 验证安装
 

@@ -101,7 +101,14 @@ mkdir -p .opencode/aeon/{genomes,memory}
 echo '[]' > .opencode/aeon/evolution-history.jsonl
 ```
 
-> 📖 完整跨平台适配说明见 [PLATFORM-ADAPTER.md](PLATFORM-ADAPTER.md)
+### Windows (OpenCode 桌面版)
+
+```powershell
+git clone --depth 1 --branch opencode https://github.com/L-ingqin12/aeon.git $env:TEMP\aeon
+powershell -ExecutionPolicy Bypass -File $env:TEMP\aeon\deploy\install-opencode-windows.ps1
+```
+
+> 📖 完整跨平台适配说明见 [PLATFORM-ADAPTER.md](PLATFORM-ADAPTER.md) | Windows 详细指南见 [deploy/WINDOWS-GUIDE.md](deploy/WINDOWS-GUIDE.md)
 
 ### 第一次使用
 
@@ -163,6 +170,10 @@ aeon/
 │
 ├── examples/
 │   └── evolution-cycle.md             # 完整进化周期示例
+│
+├── deploy/
+│   ├── install-opencode-windows.ps1   # Windows 一键部署脚本
+│   └── WINDOWS-GUIDE.md               # Windows 部署指南
 │
 └── memory-templates/
     └── evolution-preferences.md        # Memory 模板（记录进化偏好）
