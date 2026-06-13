@@ -27,7 +27,7 @@
 | Commands | `%USERPROFILE%\.config\opencode\command\` |
 | Skills | `%USERPROFILE%\.config\opencode\skill\aeon-evolve\SKILL.md` |
 | 主配置 | `%USERPROFILE%\.config\opencode\opencode.json` |
-| AEON 配置 | `%USERPROFILE%\.config\opencode\aeon\config.json` |
+| AEON 配置 | `%USERPROFILE%\.config\opencode\aeon\aeon.json` |
 | AEON 存储 | `%USERPROFILE%\.config\opencode\aeon\` |
 
 ## 一键安装
@@ -66,7 +66,7 @@ Copy-Item -Recurse aeon\.opencode\skill\aeon-evolve $env:USERPROFILE\.opencode\s
 mkdir -Force $env:USERPROFILE\.opencode\aeon\genomes
 mkdir -Force $env:USERPROFILE\.opencode\aeon\memory
 mkdir -Force $env:USERPROFILE\.opencode\script
-Copy-Item aeon\.opencode\aeon\config.json $env:USERPROFILE\.opencode\aeon\
+Copy-Item aeon\.opencode\aeon\aeon.json $env:USERPROFILE\.config\opencode\aeon\
 "[]" | Out-File $env:USERPROFILE\.opencode\aeon\evolution-history.jsonl
 ```
 
@@ -89,13 +89,13 @@ if (-not (Test-Path $env:USERPROFILE\.opencode\opencode.json)) {
 - 会话无法创建
 - Skills 不显示
 
-AEON 配置独立存放在 `%USERPROFILE%\.config\opencode\aeon\config.json`。
+AEON 配置独立存放在 `%USERPROFILE%\.config\opencode\aeon\aeon.json`。
 
 ### Windows 路径差异
 
 | Linux/Mac | Windows |
 |-----------|---------|
-| `~/.opencode/` | `%USERPROFILE%\.config\opencode\` |
+| `~/.config/opencode/` | `%USERPROFILE%\.config\opencode\` |
 | `/` 路径分隔符 | `\` 路径分隔符 |
 | `mkdir -p` | `mkdir -Force` |
 | `cp` | `Copy-Item` |

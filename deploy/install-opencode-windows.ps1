@@ -56,13 +56,13 @@ $ScriptDest = Join-Path $OpenCodeRoot "script"
 New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "genomes") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $AeonConfigDest "memory") | Out-Null
 New-Item -ItemType Directory -Force -Path $ScriptDest | Out-Null
-Copy-Item (Join-Path $TempClone ".opencode\aeon\config.json") -Destination $AeonConfigDest -Force
+Copy-Item (Join-Path $TempClone ".opencode\aeon\aeon.json") -Destination $AeonConfigDest -Force
 
 $HistoryFile = Join-Path $AeonConfigDest "evolution-history.jsonl"
 if (-not (Test-Path $HistoryFile)) {
     "[]" | Out-File -FilePath $HistoryFile -Encoding utf8
 }
-Write-Host "       Config → $AeonConfigDest\config.json"
+Write-Host "       Config → $AeonConfigDest\aeon.json"
 
 # === Step 6: opencode.json (only standard fields, no custom keys) ===
 Write-Host "[6/6] Checking opencode.json..." -ForegroundColor Yellow
@@ -86,7 +86,7 @@ Write-Host ""
 Write-Host "  Root:   $OpenCodeRoot" -ForegroundColor Gray
 Write-Host "  Agents: $AgentDest ($agentCount files)" -ForegroundColor Gray
 Write-Host "  Skill:  $SkillDest" -ForegroundColor Gray
-Write-Host "  Config: $AeonConfigDest\config.json" -ForegroundColor Gray
+Write-Host "  Config: $AeonConfigDest\aeon.json" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Next:" -ForegroundColor White
 Write-Host "  1. Restart OpenCode desktop" -ForegroundColor Gray

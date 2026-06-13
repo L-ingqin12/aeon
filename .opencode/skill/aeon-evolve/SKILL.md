@@ -54,10 +54,10 @@ version: 1.0.0
 
 ## 配置
 
-**⚠️ AEON 配置独立于 `opencode.json`**，存放在 `.opencode/aeon/config.json`。
+**⚠️ AEON 配置独立于 `opencode.json`**，存放在 `~/.config/opencode/aeon/aeon.json`（全局）或 `.opencode/aeon/aeon.json`（项目级）。
 不要将 `aeon` 键放入 `opencode.json` — OpenCode schema 不识别自定义字段，会导致模型/agent/skill 全部加载失败。
 
-示例 `.opencode/aeon/config.json`：
+示例 `.opencode/aeon/aeon.json`：
 
 ```json
 {

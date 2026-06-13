@@ -23,7 +23,7 @@ AEON 的架构设计是平台无关的。本文档说明如何将 AEON 适配到
 | **触发机制** | Hooks (settings.json) | Commands (.opencode/command/) + Plugins |
 | **Memory** | `memory/*.md` 文件持久化 | Context cache + `AGENTS.md` |
 | **Workflow** | Workflow tool (JS script) | 无原生支持 → 用 sequential delegate_task |
-| **配置** | settings.json (.claude/) | opencode.json (仅标准字段) + .opencode/aeon/config.json (AEON 独立配置) |
+| **配置** | settings.json (.claude/) | opencode.json (仅标准字段) + .opencode/aeon/aeon.json (AEON 独立配置) |
 
 ---
 
@@ -149,8 +149,8 @@ Claude Code 的 memory 文件系统 (`memory/*.md`) 在 OpenCode 中无直接等
 
 | 平台 | 全局根目录 | Agent 路径 | Skill 路径 | 配置路径 |
 |------|-----------|-----------|-----------|---------|
-| **Linux/Mac** | `~/.opencode/` | `~/.opencode/agent/` | `~/.opencode/skill/` | `~/.opencode/aeon/config.json` |
-| **Windows** | `%USERPROFILE%\\.config\\opencode\\` | `%USERPROFILE%\\.config\\opencode\\agent\\` | `%USERPROFILE%\\.config\\opencode\\skill\\` | `%USERPROFILE%\\.config\\opencode\\aeon\\config.json` |
+| **Linux/Mac** | `~/.config/opencode/` | `~/.config/opencode/agent/` | `~/.config/opencode/skill/` | `~/.config/opencode/aeon/aeon.json` |
+| **Windows** | `%USERPROFILE%\\.config\\opencode\\` | `%USERPROFILE%\\.config\\opencode\\agent\\` | `%USERPROFILE%\\.config\\opencode\\skill\\` | `%USERPROFILE%\\.config\\opencode\\aeon\\aeon.json` |
 
 ---
 
@@ -172,7 +172,7 @@ cp /tmp/aeon-install/.opencode/command/evolve.md .opencode/command/
 cp -r /tmp/aeon-install/.opencode/skill/aeon-evolve .opencode/skill/
 
 # 5. 复制 AEON 独立配置（⚠️ 不要合并到 opencode.json！自定义键会导致 OpenCode schema 校验失败）
-cp /tmp/aeon-install/.opencode/aeon/config.json .opencode/aeon/config.json
+cp /tmp/aeon-install/.opencode/aeon/aeon.json .opencode/aeon/aeon.json
 
 # 6. 如果你还没有 opencode.json，复制模板：
 cp /tmp/aeon-install/opencode.json .opencode/opencode.json
