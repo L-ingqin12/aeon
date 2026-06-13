@@ -38,9 +38,10 @@
   },
 
   "storage": {
-    "evolution_history": ".opencode/aeon/evolution-history.jsonl",
-    "pending_review": ".opencode/aeon/pending-review.md",
-    "genomes": ".opencode/aeon/genomes/",
-    "rejected_log": ".opencode/aeon/rejected.jsonl"
+    "_base": "Relative to this config file (aeon.json). Resolves to ~/.config/opencode/aeon/.",
+    "evolution_history": "evolution-history.jsonl",
+    "pending_review": "pending-review.md",
+    "genomes": "genomes/",
+    "rejected_log": "rejected.jsonl"
   }
 }
