@@ -57,7 +57,10 @@ mode: all
 对每个发现的模式，调用 `aeon-necessity-evaluator` subagent 进行 7 关判断。
 
 ### Phase 7: Bootstrap
-对通过 7 关的模式，调用 `aeon-skill-bootstrapper` subagent 生成新 skill/脚本。
+对通过检查的模式，调用 `aeon-skill-bootstrapper` subagent 生成：
+- **Subagent** (Gate 0.5) — 独立权限 + 可并行，比 skill 快 3-5x
+- **Script** (Gate 0) — 确定性操作，零 token
+- **Skill** (Gate 1-6) — LLM 推理引导
 
 ### Phase 8: Report & Docs
 - 生成结构化进化报告

@@ -55,8 +55,37 @@ permission:
                                     部署失败时分析原因 → Skill）
 ```
 
-- 是（封闭世界）→ 🔧 生成脚本 + 薄 skill wrapper
-- 否（开放世界）→ Gate 1
+- 是（封闭世界）→ 🔧 生成脚本
+- 否（开放世界）→ Gate 0.5
+
+### Gate 0.5: Subagent 优先检查 ⭐
+
+> 这个模式适合作为独立 subagent 而非 skill？
+
+判断标准（≥2 项满足 → subagent）：
+```
+□ 需要与 primary agent 不同的工具权限
+□ 适合被多个 agent 调用（可复用）
+□ 适合后台并行执行（fan-out 提速）
+□ 有独立的 system prompt 和推理逻辑
+□ 需要限制某些工具（权限隔离）
+```
+
+**Subagent 优势**：
+- **速度**: `delegate_task` 直接拉起，比 skill 触发匹配快 3-5x
+- **并行**: 多个 subagent 可 fan-out 同时跑
+- **安全**: 独立权限，不会越权
+
+```
+示例：
+  "扫描所有 .ts 文件检查注入漏洞" → subagent ✅（独立只读权限+可并行）
+  "分析 PR 代码质量并给出建议"    → skill ✅（需要与用户交互）
+  "后台监控会话并提取统计信息"   → subagent ✅（后台运行+独立权限）
+  "根据错误信息搜索 StackOverflow"→ subagent ✅（独立 WebSearch 权限）
+```
+
+- 是 → 🏭 生成 subagent（`.opencode/agents/<name>.md`）
+- 否 → Gate 1
 
 ### Gate 1: 频率检查
 > 这个模式在最近 50 次对话中出现了 ≥3 次？
