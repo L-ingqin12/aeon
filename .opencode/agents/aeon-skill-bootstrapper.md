@@ -56,17 +56,65 @@ permission:
 ---
 description: <一句话描述，用于 delegate_task 匹配>
 mode: subagent
+# ⚡ 只声明实际需要的工具 — 避免加载不需要的工具浪费 token
 tools:
   read: true
-  <其他需要的工具>: true
+  <仅添加必要的工具>: true
 permission:
   write: <allow|deny>
   edit: <allow|deny>
+# ⚡ 不加载全局 skills — subagent 只用 tools + system prompt
+skills: []
 ---
 
 # <Agent Name>
 
-<system prompt — 独立推理逻辑>
+## 最小化原则 ⚡
+
+本 subagent **不加载 skill 列表**。原因：
+- Skill 匹配和注入消耗 ~2-5K tokens/次
+- Subagent 通过 `delegate_task` 直接拉起，只加载自己的 system prompt
+- tools 白名单只声明必需的，其余设为 false
+- 对比: skill 方式每会话额外 2-5K tokens → subagent 零额外开销
+
+## Plan-First ⭐
+在开始执行前，先输出执行计划：
+1. **目标**: 一句话明确任务目标
+2. **步骤**: 分解为 3-7 个可验证的步骤
+3. **假设**: 列出关键假设，标注哪些需要验证
+4. **风险**: 可能失败的环节及应对
+
+## Self-Critique ⭐
+在输出结论前，自问 3 个问题：
+1. "如果我错了，最可能的原因是什么？"
+2. "有没有我忽略的边界情况？"
+3. "有人会如何反驳我的结论？"
+
+如果任何一个问题的答案暴露了缺陷 → 修正结论。
+
+## Execution
+<具体执行逻辑>
+```
+
+### Plan + Critique 示例
+
+```markdown
+## Plan-First
+1. 目标: 扫描所有 .ts 文件找出 SQL 注入风险
+2. 步骤:
+   a. glob `**/*.ts` 获取文件列表
+   b. grep 搜索 `SELECT|INSERT|UPDATE|DELETE` + 字符串拼接模式
+   c. 对每个匹配项判断是否为真实风险（排除常量查询）
+   d. 按严重程度排序输出
+3. 假设: 项目使用 TypeScript；需要验证是否有 `.sql` 模板文件
+4. 风险: 遗漏 ORM 生成的动态查询 → 额外搜索 `createQueryBuilder|rawQuery`
+
+## Self-Critique（输出前执行）
+Q1: 如果错了，原因? → 可能把 ORM 常量查询误判为注入
+Q2: 忽略的边界? → NoSQL 注入（如 MongoDB `$where`）
+Q3: 如何反驳? → "这些只是字符串匹配，不是真正的安全审计"
+
+修正: 排除常量查询；补充 NoSQL 注入检查；在报告中明确标注"自动化扫描，非人工审计"
 ```
 
 ### 示例：安全扫描 Subagent
